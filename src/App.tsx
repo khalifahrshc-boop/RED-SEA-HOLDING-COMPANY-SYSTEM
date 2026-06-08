@@ -30,6 +30,7 @@ import { Productivity } from './components/Productivity';
 import { ContractorClaims } from './components/ContractorClaims';
 import { ProjectCharter } from './components/ProjectCharter';
 import { DailyPlanningReport } from './components/DailyPlanningReport';
+import { DailyReportsManager } from './components/DailyReportsManager';
 import { View, Project, Invoice, ProjectCostSheet, Worker, ProjectResource, Asset, AttendanceSheet, AdditionalCost, DailyExpenditure, BudgetVarianceReport, CompanyData } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
@@ -488,19 +489,19 @@ function AppContent() {
     if (!user) return;
 
     const unsubProjects = onSnapshot(collection(db, 'projects'), (snap) => {
-      setProjects(snap.docs.map(d => ({ id: d.id, ...convertTimestamps(d.data()) } as Project)));
+      setProjects(snap.docs.map(d => ({ ...convertTimestamps(d.data()), id: d.id } as Project)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'projects'));
 
     const unsubWorkers = onSnapshot(collection(db, 'workers'), (snap) => {
-      setWorkers(snap.docs.map(d => ({ id: d.id, ...convertTimestamps(d.data()) } as Worker)));
+      setWorkers(snap.docs.map(d => ({ ...convertTimestamps(d.data()), id: d.id } as Worker)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'workers'));
 
     const unsubAttendance = onSnapshot(collection(db, 'attendanceSheets'), (snap) => {
-      setAttendanceSheets(snap.docs.map(d => ({ id: d.id, ...convertTimestamps(d.data()) } as AttendanceSheet)));
+      setAttendanceSheets(snap.docs.map(d => ({ ...convertTimestamps(d.data()), id: d.id } as AttendanceSheet)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'attendanceSheets'));
 
     const unsubInvoices = onSnapshot(collection(db, 'invoices'), (snap) => {
-      setInvoices(snap.docs.map(d => ({ id: d.id, ...convertTimestamps(d.data()) } as Invoice)));
+      setInvoices(snap.docs.map(d => ({ ...convertTimestamps(d.data()), id: d.id } as Invoice)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'invoices'));
 
     return () => {
@@ -927,6 +928,8 @@ function AppContent() {
         return <ProjectCharter projects={projects} company={company} language={language} />;
       case 'daily-planning':
         return <DailyPlanningReport projects={projects} company={company} language={language} />;
+      case 'daily-reports':
+        return <DailyReportsManager projects={projects} company={company} language={language} />;
       default:
         return <Dashboard projects={projects} invoices={invoices} workers={workers} language={language} company={company} />;
     }

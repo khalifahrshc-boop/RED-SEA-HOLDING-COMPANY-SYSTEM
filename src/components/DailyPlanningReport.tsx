@@ -287,7 +287,7 @@ export const DailyPlanningReport: React.FC<Props> = ({
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data: DPRData[] = [];
       snapshot.forEach((doc) => {
-        data.push(doc.data() as DPRData);
+        data.push({ ...doc.data(), id: doc.id } as DPRData);
       });
       // Sort by createdAt desc
       data.sort((a, b) => {
@@ -390,6 +390,13 @@ export const DailyPlanningReport: React.FC<Props> = ({
     { id: "other", label: "Extra & Signatures", icon: Settings },
   ];
 
+  const handlePrint = () => {
+    window.focus();
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   const generatePDF = async () => {
     setIsGeneratingPDF(true);
     try {
@@ -463,7 +470,7 @@ export const DailyPlanningReport: React.FC<Props> = ({
             {isFormOpen ? (
               <>
                 <button
-                  onClick={() => window.print()}
+                  onClick={handlePrint}
                   className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 font-medium text-sm flex items-center gap-2 shadow-sm"
                 >
                   <Printer className="w-4 h-4" /> Print

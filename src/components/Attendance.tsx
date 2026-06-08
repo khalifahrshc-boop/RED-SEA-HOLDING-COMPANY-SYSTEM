@@ -435,6 +435,7 @@ export function Attendance({ projects, workers, attendanceSheets, setAttendanceS
       }, 10000);
       
       try {
+        window.focus();
         window.print();
       } catch (e) {
         console.error("Print blocked by browser", e);

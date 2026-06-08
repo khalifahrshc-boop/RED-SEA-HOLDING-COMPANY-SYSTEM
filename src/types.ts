@@ -1,3 +1,11 @@
+export interface ClientInfo {
+  clientName: string;
+  clientOrganization: string;
+  clientRepresentative: string;
+  contactNumber: string;
+  emailAddress: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -15,6 +23,8 @@ export interface Project {
   attendancePrepTime: string; // e.g. "07:00"
   attendanceCloseTime: string; // e.g. "09:00"
   dailyBudget: number; // Daily allocated limit
+  clientName?: string;
+  clientInfo?: ClientInfo;
   productivityMetrics?: { id: string; targetTask: string; unitMeasurement: string; defaultUnitCost: number; defaultDailyQuota: number; }[];
   createdAt?: any;
 }
@@ -647,7 +657,7 @@ export interface DailyWorkPlan {
   updatedAt: string;
 }
 
-export type View = 'dashboard' | 'projects' | 'hr' | 'accommodation' | 'finance' | 'procurement' | 'risk' | 'inventory' | 'attendance' | 'additional-costs' | 'daily-expenditures' | 'budget-variance' | 'equipment' | 'user-guide' | 'settings' | 'productivity' | 'planning' | 'contracts' | 'accounting-tree' | 'contractor-claims' | 'project-charter' | 'daily-planning' | 'payroll';
+export type View = 'dashboard' | 'projects' | 'hr' | 'accommodation' | 'finance' | 'procurement' | 'risk' | 'inventory' | 'attendance' | 'additional-costs' | 'daily-expenditures' | 'budget-variance' | 'equipment' | 'user-guide' | 'settings' | 'productivity' | 'planning' | 'contracts' | 'accounting-tree' | 'contractor-claims' | 'project-charter' | 'daily-planning' | 'payroll' | 'daily-reports';
 
 export interface SectionPermission {
   sectionId: string;

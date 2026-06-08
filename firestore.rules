@@ -351,5 +351,33 @@ service cloud.firestore {
     match /project_daily_outputs/{id} { allow read, write: if isSignedIn(); }
     match /productivity_records/{id} { allow read, write: if isSignedIn(); }
     match /payroll_periods/{id} { allow read, write: if isSignedIn(); }
+    // ----------------------------------------------------------------------
+    // /dailyReports/{id}
+    // ----------------------------------------------------------------------
+    function isValidDailyReport(data) {
+      return (data.reportNumber is string && data.reportNumber.size() <= 50)
+          && (data.reportTitle is string && data.reportTitle.size() <= 250)
+          && (data.reportDate is string && data.reportDate.size() <= 20)
+          && (data.reportStatus is string && data.reportStatus in ['Draft', 'Approved', 'Review', 'Pending', 'Rejected'])
+          && (!data.keys().hasAll(['preparedBy']) || (data.preparedBy is string && data.preparedBy.size() <= 200))
+          && (!data.keys().hasAll(['referenceNumber']) || (data.referenceNumber is string && data.referenceNumber.size() <= 100))
+          && (!data.keys().hasAll(['companyInfo']) || (data.companyInfo is map))
+          && (!data.keys().hasAll(['projectInfo']) || (data.projectInfo is map))
+          && (!data.keys().hasAll(['clientInfo']) || (data.clientInfo is map))
+          && (!data.keys().hasAll(['sections']) || (data.sections is list))
+          && (!data.keys().hasAll(['approvals']) || (data.approvals is list))
+          && (!data.keys().hasAll(['config']) || (data.config is map))
+          && (!data.keys().hasAll(['isTemplate']) || (data.isTemplate is bool))
+          && (!data.keys().hasAll(['templateName']) || (data.templateName is string && data.templateName.size() <= 100))
+          && (!data.keys().hasAll(['createdAt']) || (data.createdAt is string || data.createdAt is timestamp))
+          && (!data.keys().hasAll(['updatedAt']) || (data.updatedAt is string || data.updatedAt is timestamp));
+    }
+
+    match /dailyReports/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id) && isValidDailyReport(incoming());
+      allow update: if isVerified() && isValidDailyReport(incoming());
+      allow delete: if isAdmin() || isVerified();
+    }
   }
 }

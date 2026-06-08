@@ -669,7 +669,10 @@ export function SirManager({ projects, company, language }: SirManagerProps) {
 
   // Print trigger optimized for screen elements
   const handleTriggerPrint = () => {
-    window.print();
+    window.focus();
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   // Export to PDF using high-fidelity html2canvas + jsPDF capture

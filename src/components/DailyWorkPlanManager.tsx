@@ -57,7 +57,7 @@ export function DailyWorkPlanManager({ onClose, company, projects }: DailyWorkPl
   React.useEffect(() => {
     const q = query(collection(db, 'dailyWorkPlans'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const pList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DailyWorkPlan));
+      const pList = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as DailyWorkPlan));
       setPlans(pList);
       setLoading(false);
     }, (error) => {

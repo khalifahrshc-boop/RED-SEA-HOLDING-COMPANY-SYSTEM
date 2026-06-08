@@ -196,6 +196,31 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["projectName", "projectLocation", "prepTime", "month"]
+    },
+    "DailyReport": {
+      "title": "Daily Report",
+      "description": "Flexible progress, safety, handover, inspection, or quality daily reports",
+      "type": "object",
+      "properties": {
+        "reportNumber": { "type": "string" },
+        "reportTitle": { "type": "string" },
+        "reportDate": { "type": "string" },
+        "reportTime": { "type": "string" },
+        "reportStatus": { "type": "string" },
+        "preparedBy": { "type": "string" },
+        "referenceNumber": { "type": "string" },
+        "companyInfo": { "type": "object" },
+        "projectInfo": { "type": "object" },
+        "clientInfo": { "type": "object" },
+        "sections": { "type": "array" },
+        "approvals": { "type": "array" },
+        "config": { "type": "object" },
+        "isTemplate": { "type": "boolean" },
+        "templateName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["reportNumber", "reportTitle", "reportDate", "reportStatus"]
     }
   },
   "firestore": {
@@ -238,6 +263,10 @@
     "/dailyAttendanceSchedules/{id}": {
       "schema": "DailyAttendanceSchedule",
       "description": "Project-based monthly daily attendance schedules"
+    },
+    "/dailyReports/{id}": {
+      "schema": "DailyReport",
+      "description": "Flexible daily reports"
     }
   }
 }

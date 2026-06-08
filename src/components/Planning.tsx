@@ -609,7 +609,10 @@ export function Planning({ projects, workers, language, company }: PlanningProps
   // Use general layout printing style for Gantt and spreadsheets
   const triggerProfessionalPrint = () => {
     addPrimaveraLog('Print Output', 'Generated hardcopy landscape sheets of current control charts.');
-    window.print();
+    window.focus();
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   // --- FREEZE PLAN BASELINES REGISTER ---

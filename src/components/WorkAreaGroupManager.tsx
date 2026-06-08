@@ -52,7 +52,7 @@ export function WorkAreaGroupManager({ onClose, company }: WorkAreaGroupManagerP
   React.useEffect(() => {
     const q = query(collection(db, 'workAreaGroups'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const gList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WorkAreaGroup));
+      const gList = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as WorkAreaGroup));
       setGroups(gList);
       setLoading(false);
     }, (error) => {

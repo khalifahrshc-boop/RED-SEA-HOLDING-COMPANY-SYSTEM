@@ -436,11 +436,11 @@ export function ComprehensiveProjectReport({
 
   const handlePrint = () => {
     // If we're in an iframe, window.print() might be inconsistent.
-    // Try to focus and trigger print.
+    // Try to focus and trigger print after a short delay.
     window.focus();
     setTimeout(() => {
       window.print();
-    }, 100);
+    }, 250);
   };
 
   const SectionHeader = ({ id, title, icon: Icon, count }: { id: string, title: string, icon: any, count?: number }) => (

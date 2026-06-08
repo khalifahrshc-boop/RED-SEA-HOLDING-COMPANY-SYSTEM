@@ -69,7 +69,7 @@ export function ComprehensiveAttendanceReport({ language, company, onClose }: Co
   useEffect(() => {
     const q = query(collection(db, 'comprehensiveAttendance'), where('month', '==', selectedMonth));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as EmployeeAttendanceRec));
+      const docs = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as EmployeeAttendanceRec));
       setEmployees(docs);
       setLoading(false);
     }, (error) => {
@@ -197,6 +197,13 @@ export function ComprehensiveAttendanceReport({ language, company, onClose }: Co
     setSelectedForExport(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
+  };
+
+  const handlePrint = () => {
+    window.focus();
+    setTimeout(() => {
+      window.print();
+    }, 150);
   };
 
   const handleDownloadPDF = async (all = false) => {
@@ -609,7 +616,7 @@ export function ComprehensiveAttendanceReport({ language, company, onClose }: Co
                       <Download className="w-5 h-5" />
                     </button>
                     <button 
-                      onClick={() => window.print()}
+                      onClick={handlePrint}
                       className="p-3 text-slate-400 hover:text-slate-600 transition-colors"
                       title="Print document"
                     >

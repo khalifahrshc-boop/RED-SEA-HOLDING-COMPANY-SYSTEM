@@ -68,6 +68,7 @@ const getNavItems = (t: any, language: Language) => [
   { id: 'equipment', label: 'Equipment', icon: Truck },
   { id: 'risk', label: t.risk, icon: AlertTriangle },
   { id: 'contracts', label: 'Documents & SIR', icon: FileText },
+  { id: 'daily-reports', label: language === 'ar' ? 'إدارة التقارير اليومية' : 'Daily Reports', icon: FileText },
   { id: 'contractor-claims', label: 'Contractor Claims', icon: FileText },
   { id: 'project-charter', label: 'Project Charter', icon: FileText },
   { id: 'settings', label: 'Settings', icon: Settings },
@@ -148,6 +149,7 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
     risk: { dept: 'internal_admin', section: 'risk' },
     procurement: { dept: 'external_admin', section: 'procurement' },
     contracts: { dept: 'external_admin', section: 'contracts' },
+    'daily-reports': { dept: 'external_admin', section: 'daily-reports' },
     inventory: { dept: 'external_admin', section: 'inventory' },
     settings: { dept: 'system', section: 'settings' }
   };
@@ -168,7 +170,7 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
     { title: 'Human Resources', views: ['hr', 'attendance', 'payroll'] },
     { title: 'Projects', views: ['projects', 'project-charter', 'planning', 'daily-planning', 'contractor-claims', 'productivity'] },
     { title: 'Internal Administration', views: ['equipment', 'accommodation', 'risk'] },
-    { title: 'External Administration', views: ['procurement', 'contracts', 'inventory'] },
+    { title: 'External Administration', views: ['procurement', 'contracts', 'inventory', 'daily-reports'] },
     { title: 'System', views: ['settings', 'user-guide'] }
   ];
 

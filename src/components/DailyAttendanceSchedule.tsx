@@ -212,8 +212,8 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'dailyAttendanceSchedules'), (snap) => {
       const records = snap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        id: doc.id
       })) as DailyAttendanceSchedule[];
       setSchedules(records);
       setLoading(false);
@@ -477,6 +477,7 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
       }, 10000);
       
       try {
+        window.focus();
         window.print();
       } catch (e) {
         console.error("Print blocked by browser", e);

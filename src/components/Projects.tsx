@@ -31,7 +31,8 @@ import {
   LayoutDashboard,
   ArrowLeft,
   Coffee,
-  Clock
+  Clock,
+  Building2
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, getCleanLogoBase64 } from '@/src/lib/utils';
 import * as XLSX from 'xlsx';
@@ -55,7 +56,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from 'recharts';
-import { Project, Worker, ProjectResource, ProjectTask, Asset } from '@/src/types';
+import { Project, Worker, ProjectResource, ProjectTask, Asset, ClientInfo } from '@/src/types';
 import { useTranslation, Language } from '../lib/translations';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { notificationService } from '../lib/notificationService';
@@ -750,6 +751,15 @@ export function Projects({
   const handleSaveProject = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
+    const clientInfo: ClientInfo = {
+      clientName: formData.get('clientName') as string,
+      clientOrganization: formData.get('clientOrganization') as string,
+      clientRepresentative: formData.get('clientRepresentative') as string,
+      contactNumber: formData.get('contactNumber') as string,
+      emailAddress: formData.get('emailAddress') as string,
+    };
+
     const projectData: Project = {
       id: editingProject?.id || `PRJ-${Date.now().toString().slice(-4)}-${projects.length + 1}`,
       name: formData.get('name') as string,
@@ -767,6 +777,8 @@ export function Projects({
       attendancePrepTime: formData.get('attendancePrepTime') as string,
       attendanceCloseTime: formData.get('attendanceCloseTime') as string,
       dailyBudget: Number(formData.get('dailyBudget')),
+      clientName: clientInfo.clientName,
+      clientInfo: clientInfo,
       productivityMetrics: editingProductivityMetrics,
       createdAt: editingProject?.createdAt || new Date().toISOString()
     };
@@ -3481,6 +3493,40 @@ export function Projects({
                       No productivity metrics defined
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* SECTION 5: CLIENT INFORMATION */}
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-2 mb-2">
+                  <div className="p-1 px-1.5 bg-slate-900 text-white rounded text-[10px] font-bold">05</div>
+                  <h4 className="text-[10px] font-bold text-slate-700 uppercase tracking-widest flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                    Client Parameters
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Full Client Name</label>
+                    <input name="clientName" defaultValue={editingProject?.clientInfo?.clientName} className="w-full bg-white border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-red-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Client Organization</label>
+                    <input name="clientOrganization" defaultValue={editingProject?.clientInfo?.clientOrganization} className="w-full bg-white border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-red-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Client Representative</label>
+                    <input name="clientRepresentative" defaultValue={editingProject?.clientInfo?.clientRepresentative} className="w-full bg-white border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-red-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Contact Number</label>
+                    <input name="contactNumber" defaultValue={editingProject?.clientInfo?.contactNumber} className="w-full bg-white border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-red-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Email Address</label>
+                    <input name="emailAddress" defaultValue={editingProject?.clientInfo?.emailAddress} className="w-full bg-white border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-red-500 outline-none" />
+                  </div>
                 </div>
               </div>
 

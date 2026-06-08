@@ -53,8 +53,8 @@ export const notificationService = {
       const notifications = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
-          id: doc.id,
           ...data,
+          id: doc.id,
           // Handle Timestamp conversion
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString()
         } as AppNotification;
