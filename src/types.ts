@@ -196,6 +196,8 @@ export interface Invoice {
 export interface QuoteItem {
   id: string;
   description: string;
+  type: string;
+  unit: string;
   quantity: number;
   unitPrice: number;
   total: number;
@@ -206,8 +208,17 @@ export interface PriceQuote {
   projectId: string;
   vendorName: string;
   date: string;
+  receivingCompany?: string;
+  receivingCompanyDetails?: string;
+  contactPerson?: string;
   items: QuoteItem[];
+  subtotal?: number;
+  taxRate?: number;
+  taxAmount?: number;
   totalAmount: number;
+  termsAndConditions?: string[];
+  clientRepresentativeName?: string;
+  authorizedSignatureName?: string;
   status: 'Draft' | 'Internal Review' | 'Awaiting Finance' | 'Approved' | 'Rejected';
 }
 
