@@ -1,0 +1,6 @@
+{
+  "name": "RED SEA HOLDING SYSTEM ERP",
+  "description": "Advanced Project-Based ERP with AI-driven risk detection, worker accommodation, meal management, and integrated financials.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-arabic: "IBM Plex Sans Arabic", "Inter", sans-serif;
+
+  /* Saturated, vibrant, high-clarity Slate gray colors with clean oceanic pigments */
+  --color-slate-50: #f4f6f9;
+  --color-slate-100: #e9ecef;
+  --color-slate-200: #dee2e6;
+  --color-slate-300: #ced4da;
+  --color-slate-400: #adb5bd;
+  --color-slate-500: #6c757d;
+  --color-slate-600: #495057;
+  --color-slate-700: #343a40;
+  --color-slate-800: #212529;
+  --color-slate-900: #121416;
+
+  /* Vibrant, bright, highly professional poppy & cherry reds */
+  --color-red-50: #fff5f5;
+  --color-red-100: #ffe3e3;
+  --color-red-200: #ffc9c9;
+  --color-red-300: #ffa8a8;
+  --color-red-400: #ff6b6b;
+  --color-red-500: #fa5252;
+  --color-red-600: #e03131;
+  --color-red-700: #c92a2a;
+
+  /* Dynamic & lively emerald green shades */
+  --color-emerald-50: #ebfbee;
+  --color-emerald-100: #d3f9d8;
+  --color-emerald-500: #37b24d;
+  --color-emerald-600: #2b8a3e;
+
+  /* Bright premium glow ambers for warnings/pending status */
+  --color-amber-50: #fff9db;
+  --color-amber-100: #fff3bf;
+  --color-amber-500: #ffd43b;
+  --color-amber-600: #fab005;
+
+  /* Vivid luxury rose pinks */
+  --color-rose-50: #fff0f6;
+  --color-rose-100: #ffdeeb;
+  --color-rose-500: #f06595;
+  --color-rose-600: #e64980;
+
+  /* Rich cobalt & tech-forward indigo tones */
+  --color-indigo-50: #edf2ff;
+  --color-indigo-100: #dbe4ff;
+  --color-indigo-500: #4c6ef5;
+  --color-indigo-600: #3b5bdb;
+
+  /* Radiant dream fuchsia details */
+  --color-fuchsia-50: #fdf4ff;
+  --color-fuchsia-100: #fae8ff;
+  --color-fuchsia-500: #da77f2;
+  --color-fuchsia-600: #be4bdb;
+
+  /* Vibrant pink highlights */
+  --color-pink-50: #fff0f6;
+  --color-pink-100: #ffdeeb;
+  --color-pink-500: #f06595;
+  --color-pink-600: #e64980;
+
+  /* Vivid saturated cyan accents */
+  --color-cyan-50: #e3fafc;
+  --color-cyan-100: #c5f6fa;
+  --color-cyan-500: #22b8cf;
+  --color-cyan-600: #0c8599;
+
+  /* Saturated refreshing sea sky-blue tones */
+  --color-sky-50: #e7f5ff;
+  --color-sky-100: #d0ebff;
+  --color-sky-500: #228be6;
+  --color-sky-600: #1c7ed6;
+
+  /* Vibrant teal tones */
+  --color-teal-50: #e6fcf5;
+  --color-teal-100: #c3fae8;
+  --color-teal-500: #12b886;
+  --color-teal-600: #0ca678;
+
+  /* Fresh neon-lime accent details */
+  --color-lime-50: #f4fce3;
+  --color-lime-100: #e2f9b8;
+  --color-lime-500: #82c91e;
+  --color-lime-600: #74b816;
+
+  /* Sun-drenched crisp orange tones */
+  --color-orange-50: #fff4e6;
+  --color-orange-100: #ffe8cc;
+  --color-orange-500: #ff922b;
+  --color-orange-600: #fd7e14;
+
+  /* Royal blue professional palette */
+  --color-blue-50: #e7f5ff;
+  --color-blue-100: #d0ebff;
+  --color-blue-500: #228be6;
+  --color-blue-600: #1c7ed6;
+
+  /* Vibrant, clear gray tones instead of muddy defaults */
+  --color-gray-50: #f8f9fa;
+  --color-gray-100: #f1f3f5;
+  --color-gray-200: #e9ecef;
+  --color-gray-300: #dee2e6;
+  --color-gray-400: #ced4da;
+  --color-gray-500: #adb5bd;
+  --color-gray-650: #868e96;
+  --color-gray-600: #495057;
+  --color-gray-750: #343a40;
+  --color-gray-800: #212529;
+  --color-gray-900: #0e1116;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+.glass-panel {
+  @apply bg-white border border-slate-200 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md;
+}
+
+.active-nav-link {
+  @apply text-red-600 border-b-2 border-red-600;
+}
+
+.secondary-card {
+  @apply bg-slate-50 border border-slate-200 rounded p-4;
+}
+
+.dark-section {
+  @apply bg-slate-800 text-white rounded-xl shadow-lg p-5;
+}
+
+@media print {
+  header, aside, .print\:hidden, [class*="fixed"], [class*="absolute"]:not(.print-keep) {
+    display: none !important;
+  }
+  
+  main {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: transparent !important;
+  }
+  
+  #sir-printable-document, #claim-report-printable {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: white !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #attendance-report-printable, #attendance-comprehensive-printable, #attendance-schedule-printable {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: white !important;
+  }
+
+  body {
+    background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .break-before-page {
+    break-before: page !important;
+  }
+
+  #attendance-report-printable *, #attendance-comprehensive-printable *, #attendance-schedule-printable *, #sir-printable-document *, #claim-report-printable * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

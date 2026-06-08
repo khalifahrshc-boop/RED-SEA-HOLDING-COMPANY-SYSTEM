@@ -1,0 +1,198 @@
+
+export type Language = 'en' | 'ar';
+
+export const translations = {
+  en: {
+    dashboard: "Executive Dashboard",
+    projects: "Project Management",
+    hr: "Human Resources",
+    finance: "Financial Control",
+    procurement: "Procurement",
+    accommodation: "Accommodations",
+    inventory: "Logistics Hub",
+    risk: "Risk Assessment",
+    search: "Search everything...",
+    notifications: "System Alerts",
+    admin: "Admin Console",
+    switchLanguage: "العربية",
+    stats: {
+      budget: "Total Net Budget",
+      workforce: "Total Workforce",
+      projects: "Active Projects",
+      occupancy: "Camp Occupancy"
+    },
+    common: {
+      add: "Add New",
+      edit: "Edit",
+      delete: "Delete",
+      save: "Save Changes",
+      cancel: "Cancel",
+      view: "View Details",
+      status: "Status",
+      location: "Location",
+      role: "Role",
+      cost: "Daily Cost"
+    },
+    projects_view: {
+      title: "Project Portfolio",
+      new_project: "New Project Node",
+      analytics: "Operational Analytics",
+      roadmap: "Timeline Roadmap",
+      personnel: "Site Personnel",
+      resources: "Material Assets",
+      financial: "Cost Control",
+      assign_staff: "Deploy Personnel",
+      budget_utilization: "Budget Utilization",
+      project_health: "Project Health Index"
+    },
+    data: {
+      "North Delta Bridge": "جسر شمال الدلتا",
+      "Red Sea Tourism Hub": "مركز البحر الأحمر السياحي",
+      "Marsa Matrouh Coastal": "ساحل مرسى مطروح",
+      "New Alamein City Node": "عقدة مدينة العلمين الجديدة",
+      "Ahmed Ali": "أحمد علي",
+      "Mohammad Khan": "محمد خان",
+      "Raj Kumar": "راج كومار",
+      "Masonry Specialist": "أخصائي بناء",
+      "Steel Fixer": "حداد تسليح",
+      "Site Engineer": "مهندس موقع",
+      "Heavy Machinery": "آلات ثقيلة",
+      "Consumable": "مواد استهلاكية",
+      "Cement Mix X-100": "خلاط أسمنت X-100",
+      "Bulldozer D9R": "بلدوزر D9R",
+      "Working": "يعمل",
+      "On Site": "في الموقع",
+      "Off Duty": "خارج الدوام",
+      "Vacation": "إجازة",
+      "On Leave": "إجازة مرضية/خاصة",
+      "Ordered": "تم الطلب",
+      "Material": "مواد",
+      "Equipment": "معدات",
+      "Bags": "أكياس",
+      "Units": "وحدات",
+      "Active": "نشط",
+      "Completed": "مكتمل",
+      "Delayed": "متأخر",
+      "High": "عالي",
+      "Medium": "متوسط",
+      "Low": "منخفض"
+    }
+  },
+  ar: {
+    dashboard: "لوحة القيادة التنفيذية",
+    projects: "إدارة المشاريع",
+    hr: "الموارد البشرية",
+    finance: "الرقابة المالية",
+    procurement: "المشتريات",
+    accommodation: "السكن والإقامة",
+    inventory: "مركز الخدمات اللوجستية",
+    risk: "تقييم المخاطر",
+    search: "بحث في النظام...",
+    notifications: "تنبيهات النظام",
+    admin: "لوحة التحكم",
+    switchLanguage: "English",
+    stats: {
+      budget: "إجمالي الميزانية الصافية",
+      workforce: "إجمالي القوى العاملة",
+      projects: "المشاريع النشطة",
+      occupancy: "إشغال المخيمات"
+    },
+    common: {
+      add: "إضافة جديد",
+      edit: "تعديل",
+      delete: "حذف",
+      save: "حفظ التغييرات",
+      cancel: "إلغاء",
+      view: "عرض التفاصيل",
+      status: "الحالة",
+      location: "الموقع",
+      role: "الدور",
+      cost: "التكلفة اليومية"
+    },
+    projects_view: {
+      title: "محفظة المشاريع",
+      new_project: "مشروع جديد",
+      analytics: "التحليلات التشغيلية",
+      roadmap: "خارطة الطريق",
+      personnel: "موظفي الموقع",
+      resources: "الأصول والمواد",
+      financial: "الرقابة على التكاليف",
+      assign_staff: "تعيين الموظفين",
+      budget_utilization: "استخدام الميزانية",
+      project_health: "مؤشر صحة المشروع"
+    },
+    data: {
+      "North Delta Bridge": "جسر شمال الدلتا",
+      "Red Sea Tourism Hub": "مركز البحر الأحمر السياحي",
+      "Marsa Matrouh Coastal": "ساحل مرسى مطروح",
+      "New Alamein City Node": "عقدة مدينة العلمين الجديدة",
+      "Ahmed Ali": "أحمد علي",
+      "Mohammad Khan": "محمد خان",
+      "Raj Kumar": "راج كومار",
+      "Masonry Specialist": "أخصائي بناء",
+      "Steel Fixer": "حداد تسليح",
+      "Site Engineer": "مهندس موقع",
+      "Heavy Machinery": "آلات ثقيلة",
+      "Consumable": "مواد استهلاكية",
+      "Cement Mix X-100": "خلاط أسمنت X-100",
+      "Bulldozer D9R": "بلدوزر D9R",
+      "Working": "يعمل",
+      "On Site": "في الموقع",
+      "Off Duty": "خارج الدوام",
+      "Vacation": "إجازة",
+      "On Leave": "إجازة مرضية/خاصة",
+      "Ordered": "تم الطلب",
+      "Material": "مواد",
+      "Equipment": "معدات",
+      "Bags": "أكياس",
+      "Units": "وحدات",
+      "Active": "نشط",
+      "Completed": "مكتمل",
+      "Delayed": "متأخر",
+      "High": "عالي",
+      "Medium": "متوسط",
+      "Low": "منخفض",
+      "Paid": "تم الدفع",
+      "Approved": "معتمد",
+      "Pending Official Approval": "في انتظار الاعتماد الرسمي",
+      "Pending Finance": "في انتظار المالية",
+      "Sent": "تم الإرسال",
+      "Draft": "مسودة",
+      "Issued": "صادر",
+      "Internal Review": "مراجعة داخلية",
+      "Awaiting Issuance": "في انتظار الإصدار",
+      "Awaiting Finance": "في انتظار المالية",
+      "Under Repair": "تحت الإصلاح",
+      "Retired": "متقاعد/خارج الخدمة",
+      "Auctioned": "تم البيع بالمزاد",
+      "Full": "ممتلئ",
+      "Available": "متاح",
+      "Mint": "حالة ممتازة",
+      "Good": "جيد",
+      "Fair": "مقبول",
+      "Maintenance Required": "يتطلب صيانة",
+      "Heavy Equipment": "معدات ثقيلة",
+      "Vehicles": "مركبات",
+      "Tools": "أدوات",
+      "IT Assets": "أصول تقنية المعلومات",
+      "Other": "أخرى",
+      "East Camp A": "مخيم الشرق أ",
+      "West Hub B": "مركز الغرب ب",
+      "North Villa": "فيلا الشمال",
+      "Staff Residences": "سكن الموظفين",
+      "No Linked Project": "لا يوجد مشروع مرتبط"
+    }
+  }
+};
+
+export const useTranslation = (language: Language) => {
+  const t = translations[language];
+  
+  const d = (value: string | undefined): string => {
+    if (!value) return '';
+    if (language === 'en') return value;
+    return t.data[value as keyof typeof t.data] || value;
+  };
+
+  return { t, d };
+};

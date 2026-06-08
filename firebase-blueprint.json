@@ -1,0 +1,243 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user schema with roles and granular permissions",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "department": { "type": "string" },
+        "permissions": { "type": "array", "items": { "type": "string" } },
+        "structuredPermissions": { "type": "object" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "role", "department", "status"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A construction or event management project",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "On Hold", "Completed"] },
+        "budget": { "type": "number" },
+        "spent": { "type": "number" },
+        "contractValue": { "type": "number" },
+        "revenueGenerated": { "type": "number" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "managerId": { "type": "string" },
+        "riskLevel": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "attendancePrepTime": { "type": "string" },
+        "attendanceCloseTime": { "type": "string" },
+        "dailyBudget": { "type": "number" },
+        "expenditureBudget": { "type": "number" }
+      },
+      "required": ["name", "status"]
+    },
+    "Worker": {
+      "title": "Worker",
+      "description": "A field worker or staff member",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "campus": { "type": "string" },
+        "room": { "type": "string" },
+        "dailyRate": { "type": "number" },
+        "equipmentDailyRate": { "type": "number" },
+        "projectId": { "type": "string" },
+        "status": { "type": "string" },
+        "meals": { "type": "string" },
+        "approvalStatus": { "type": "string" },
+        "employmentType": { "type": "string" }
+      },
+      "required": ["name", "role", "projectId"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Financial invoice with ZATCA compliance",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "project": { "type": "string" },
+        "amount": { "type": "number" },
+        "tax": { "type": "number" },
+        "total": { "type": "number" },
+        "status": { "type": "string" },
+        "qrCodeData": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "recipientTaxId": { "type": "string" },
+        "recipientAddress": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectId", "amount"]
+    },
+    "AttendanceSheet": {
+      "title": "Attendance Sheet",
+      "description": "Daily attendance records for a project",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "date": { "type": "string" },
+        "supervisorId": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["projectId", "date"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System notification or message",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "department": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "title", "message", "department", "read"]
+    },
+    "WorkAreaGroup": {
+      "title": "Work Area Group",
+      "description": "Supervisor and worker group for a specific work area",
+      "type": "object",
+      "properties": {
+        "workLocation": { "type": "string" },
+        "fromDate": { "type": "string" },
+        "toDate": { "type": "string" },
+        "shiftStartTime": { "type": "string" },
+        "groupNumber": { "type": "string" },
+        "supervisor": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "idNumber": { "type": "string" },
+            "badgeNumber": { "type": "string" },
+            "contactNumber": { "type": "string" }
+          }
+        },
+        "workers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "badgeNumber": { "type": "string" },
+              "profession": { "type": "string" },
+              "employmentType": { "type": "string" },
+              "laborSupplyCompany": { "type": "string" },
+              "startTime": { "type": "string" },
+              "endTime": { "type": "string" }
+            }
+          }
+        },
+        "projectManagerName": { "type": "string" },
+        "projectManagerContact": { "type": "string" },
+        "operationsManagerName": { "type": "string" },
+        "hrManagerName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workLocation", "fromDate", "toDate", "groupNumber", "supervisor"]
+    },
+    "EmployeeAttendanceRec": {
+      "title": "Employee Attendance Record",
+      "description": "Monthly attendance summary for an individual employee",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "idNumber": { "type": "string" },
+        "badgeNumber": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "employeeType": { "type": "string" },
+        "month": { "type": "string" },
+        "rentalCompanyName": { "type": "string" },
+        "dailyRecords": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "month"]
+    },
+    "DailyWorkPlan": {
+      "title": "Daily Work Plan",
+      "description": "Daily workforce execution plan for productivity",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "projectName": { "type": "string" },
+        "planDate": { "type": "string" },
+        "shift": { "type": "string", "enum": ["Morning", "Evening"] },
+        "planSupervisor": { "type": "string" },
+        "projectManager": { "type": "string" },
+        "planNumber": { "type": "string" },
+        "tasks": { "type": "array" },
+        "operationsManagerName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectId", "planDate", "planNumber"]
+    },
+    "DailyAttendanceSchedule": {
+      "title": "Daily Attendance Schedule",
+      "description": "Project-based monthly daily attendance schedule matrix",
+      "type": "object",
+      "properties": {
+        "projectName": { "type": "string" },
+        "projectLocation": { "type": "string" },
+        "prepTime": { "type": "string" },
+        "month": { "type": "string" },
+        "employees": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectName", "projectLocation", "prepTime", "month"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "System users collection"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Main projects collection"
+    },
+    "/workers/{workerId}": {
+      "schema": "Worker",
+      "description": "Worker profiles"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Financial records"
+    },
+    "/attendanceSheets/{id}": {
+      "schema": "AttendanceSheet",
+      "description": "Daily attendance sheets"
+    },
+    "/notifications/{id}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    },
+    "/workAreaGroups/{id}": {
+      "schema": "WorkAreaGroup",
+      "description": "Work area group management records"
+    },
+    "/comprehensiveAttendance/{id}": {
+      "schema": "EmployeeAttendanceRec",
+      "description": "Monthly comprehensive attendance matrix records"
+    },
+    "/dailyWorkPlans/{id}": {
+      "schema": "DailyWorkPlan",
+      "description": "Daily workforce execution plans"
+    },
+    "/dailyAttendanceSchedules/{id}": {
+      "schema": "DailyAttendanceSchedule",
+      "description": "Project-based monthly daily attendance schedules"
+    }
+  }
+}

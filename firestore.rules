@@ -1,0 +1,345 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} { allow read, write: if false; }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    
+    // We treat the very first user (or users without an existing document) 
+    // as capable of bootstrap setup, OR we rely on a custom claim for admin if set.
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email in ['khalifah.rshc@gmail.com', 'kalifah13579@hotmail.com'] ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid))
+         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin')
+      );
+    }
+
+    function isVerified() {
+      return isSignedIn(); // Allow all signed in users
+    }
+
+    // ----------------------------------------------------------------------
+    // /users/{userId}
+    // ----------------------------------------------------------------------
+    function isValidUser(data) {
+      return (data.name is string && data.name.size() > 0 && data.name.size() <= 100)
+          && (data.email is string && data.email.size() > 0 && data.email.size() <= 100)
+          && (data.role is string && data.role in ['Admin', 'User'])
+          && (data.department is string && data.department.size() <= 50)
+          && (data.permissions is list && data.permissions.size() <= 50)
+          && (data.status is string && data.status in ['Active', 'Inactive'])
+          && (data.createdAt is timestamp);
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (
+        request.auth.uid == userId ||
+        request.auth.token.email in ['khalifah.rshc@gmail.com', 'kalifah13579@hotmail.com'] ||
+        (
+          request.auth.uid != userId &&
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin'
+        )
+      );
+      
+      // Allow users to list if they are admin or if it's their own record.
+      // For the admin list in Settings, we grant list access to admins.
+      allow list: if isSignedIn() && (
+        request.auth.token.email in ['khalifah.rshc@gmail.com', 'kalifah13579@hotmail.com'] ||
+        isAdmin() || 
+        request.auth.uid != null
+      );
+      
+      allow create: if (isOwner(userId) || isAdmin())
+        && isValidId(userId)
+        && isVerified()
+        && isValidUser(incoming())
+        && incoming().keys().hasAll(['name', 'email', 'role', 'department', 'permissions', 'status', 'createdAt'])
+        && incoming().keys().size() <= 10;
+
+      allow update: if (
+          (isSignedIn() && isOwner(userId) && isVerified()) || 
+          (isSignedIn() && !isOwner(userId) && isAdmin())
+        )
+        && isValidUser(incoming())
+        && (
+          (isSignedIn() && isOwner(userId) && (resource.data.role == 'Admin' || request.auth.token.email in ['khalifah.rshc@gmail.com', 'kalifah13579@hotmail.com'])) || 
+          (isSignedIn() && !isOwner(userId) && isAdmin()) ||
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['name'])
+          )
+        )
+        && incoming().email == existing().email  // Email is immutable
+        && incoming().createdAt == existing().createdAt; // Creation date is immutable
+
+      allow delete: if (isAdmin() && !isOwner(userId)) || 
+        (isSignedIn() && userId.matches('^manual-user-.*') && existing().email == request.auth.token.email);
+    }
+
+    // ----------------------------------------------------------------------
+    // /projects/{projectId}
+    // ----------------------------------------------------------------------
+    function isValidProject(data) {
+      return (!data.keys().hasAll(['name']) || (data.name is string && data.name.size() <= 250))
+          && (!data.keys().hasAll(['status']) || (data.status is string && data.status in ["Active", "On Hold", "Completed"]))
+          && (!data.keys().hasAll(['budget']) || (data.budget is number))
+          && (!data.keys().hasAll(['spent']) || (data.spent is number))
+          && (!data.keys().hasAll(['createdAt']) || (data.createdAt is timestamp));
+    }
+
+    match /projects/{projectId} {
+      allow read: if isSignedIn();
+      
+      allow create: if isAdmin()
+        && isValidId(projectId)
+        && isVerified()
+        && isValidProject(incoming())
+        && incoming().keys().hasAll(['name', 'status', 'budget', 'spent', 'createdAt'])
+        && incoming().keys().size() <= 25
+        && incoming().createdAt == request.time;
+        
+      allow update: if (
+        isAdmin() || 
+        (
+          isVerified() && 
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'spent'])
+        )
+      ) && isValidProject(incoming());
+
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------------------------
+    // /workers/{workerId}
+    // ----------------------------------------------------------------------
+    function isValidWorker(data) {
+      return (!data.keys().hasAll(['name']) || (data.name is string && data.name.size() <= 150))
+          && (!data.keys().hasAll(['role']) || (data.role is string && data.role.size() <= 100))
+          && (!data.keys().hasAll(['projectId']) || (data.projectId == null || (data.projectId is string && data.projectId.size() <= 128)));
+    }
+
+    match /workers/{workerId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(workerId) && isVerified() && isValidWorker(incoming())
+        && incoming().keys().hasAll(['name', 'role', 'projectId']);
+      allow update: if isVerified() && isValidWorker(incoming())
+        && (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['role', 'projectId']));
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------------------------
+    // /invoices/{invoiceId}
+    // ----------------------------------------------------------------------
+    function isValidInvoice(data) {
+      return (!data.keys().hasAll(['projectId']) || (data.projectId is string && data.projectId.size() <= 128))
+          && (!data.keys().hasAll(['project']) || (data.project is string && data.project.size() <= 150))
+          && (!data.keys().hasAll(['amount']) || (data.amount is number && data.amount >= 0))
+          && (!data.keys().hasAll(['status']) || (data.status is string && data.status in ['Draft', 'Paid', 'Sent', 'Pending Finance', 'Pending Official Approval', 'Approved']))
+          && (!data.keys().hasAll(['tax']) || (data.tax is number && data.tax >= 0))
+          && (!data.keys().hasAll(['total']) || (data.total is number && data.total >= 0))
+          && (!data.keys().hasAll(['qrCodeData']) || (data.qrCodeData is string && data.qrCodeData.size() <= 1000))
+          && (!data.keys().hasAll(['recipientName']) || (data.recipientName is string && data.recipientName.size() <= 200))
+          && (!data.keys().hasAll(['recipientTaxId']) || (data.recipientTaxId is string && data.recipientTaxId.size() <= 100))
+          && (!data.keys().hasAll(['recipientAddress']) || (data.recipientAddress is string && data.recipientAddress.size() <= 500))
+          && (!data.keys().hasAll(['createdAt']) || (data.createdAt is timestamp));
+    }
+
+    match /invoices/{invoiceId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() 
+        && isValidId(invoiceId) 
+        && isValidInvoice(incoming())
+        && incoming().keys().hasAll(['projectId', 'amount', 'status', 'createdAt', 'tax', 'total'])
+        && incoming().keys().size() <= 25
+        && incoming().createdAt == request.time;
+      
+      allow update: if isVerified() 
+        && isValidInvoice(incoming())
+        && (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['status']));
+        
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------------------------
+    // /notifications/{id}
+    // ----------------------------------------------------------------------
+    function isValidNotification(data) {
+      return (data.type is string)
+          && (data.title is string && data.title.size() <= 200)
+          && (data.message is string && data.message.size() <= 1000)
+          && (data.department is string)
+          && (data.read is bool)
+          && (data.createdAt is timestamp);
+    }
+
+    match /notifications/{id} {
+      allow read: if isSignedIn();
+      allow list: if isSignedIn() && (isAdmin() || (resource.data.department in [get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department, 'All']));
+      allow create: if isSignedIn() && isValidNotification(incoming());
+      allow update: if isSignedIn() && (isAdmin() || (resource.data.department == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department))
+        && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      allow delete: if isAdmin() || (isSignedIn() && (resource.data.department == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.department));
+    }
+
+    // ----------------------------------------------------------------------
+    // /additionalCosts/{id}
+    // ----------------------------------------------------------------------
+    match /additionalCosts/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id);
+      allow update: if isVerified() && (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['status']));
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------------------------
+    // /expenditures/{id}
+    // ----------------------------------------------------------------------
+    match /expenditures/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id);
+      allow update: if isVerified() && (isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['status']));
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------------------------------------------------
+    // /workAreaGroups/{id}
+    // ----------------------------------------------------------------------
+    function isValidWorkAreaGroup(data) {
+      return (data.workLocation is string && data.workLocation.size() <= 200)
+          && (data.groupNumber is string && data.groupNumber.size() <= 50)
+          && (data.supervisor is map)
+          && (data.supervisor.name is string && data.supervisor.name.size() <= 100)
+          && (data.supervisor.badgeNumber is string && data.supervisor.badgeNumber.size() <= 50)
+          && (data.workers is list)
+          && (data.workers.size() <= 500) // Sanity limit for report size
+          && (!data.keys().hasAll(['projectManagerName']) || (data.projectManagerName is string && data.projectManagerName.size() <= 100))
+          && (!data.keys().hasAll(['projectManagerContact']) || (data.projectManagerContact is string && data.projectManagerContact.size() <= 50))
+          && (!data.keys().hasAll(['operationsManagerName']) || (data.operationsManagerName is string && data.operationsManagerName.size() <= 100))
+          && (!data.keys().hasAll(['hrManagerName']) || (data.hrManagerName is string && data.hrManagerName.size() <= 100))
+          && (!data.keys().hasAll(['createdAt']) || (data.createdAt is timestamp))
+          && (!data.keys().hasAll(['updatedAt']) || (data.updatedAt is timestamp));
+    }
+
+    match /workAreaGroups/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id) && isValidWorkAreaGroup(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isVerified() && isValidWorkAreaGroup(incoming())
+        && (isAdmin() || isSignedIn())
+        && incoming().createdAt == existing().createdAt
+        && (incoming().updatedAt == request.time || isAdmin());
+      allow delete: if isAdmin() || isVerified();
+    }
+
+    // ----------------------------------------------------------------------
+    // /comprehensiveAttendance/{id}
+    // ----------------------------------------------------------------------
+    function isValidComprehensiveAttendance(data) {
+      return (data.name is string && data.name.size() <= 200)
+          && (data.month is string && data.month.size() <= 7)
+          && (data.dailyRecords is list);
+    }
+
+    match /comprehensiveAttendance/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id) && isValidComprehensiveAttendance(incoming());
+      allow update: if isVerified() && isValidComprehensiveAttendance(incoming());
+      allow delete: if isAdmin() || isVerified();
+    }
+
+    // ----------------------------------------------------------------------
+    // /attendanceSheets/{id}
+    // ----------------------------------------------------------------------
+    match /attendanceSheets/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id);
+      allow update: if isVerified() && (isAdmin() || incoming().status != existing().status || incoming().records.size() != existing().records.size());
+      allow delete: if isAdmin() || isVerified();
+    }
+    // ----------------------------------------------------------------------
+    // /dailyWorkPlans/{id}
+    // ----------------------------------------------------------------------
+    function isValidDailyWorkPlan(data) {
+      return (data.projectId is string && data.projectId.size() <= 128)
+          && (data.projectType in ['internal', 'external'])
+          && (data.projectName is string && data.projectName.size() <= 200)
+          && (!data.keys().hasAll(['externalLocation']) || (data.externalLocation is string && data.externalLocation.size() <= 300))
+          && (data.planDate is string && data.planDate.size() <= 20)
+          && (data.shift in ['Morning', 'Evening'])
+          && (data.planNumber is string && data.planNumber.size() <= 50)
+          && (data.planSupervisor is string && data.planSupervisor.size() <= 200)
+          && (data.projectManager is string && data.projectManager.size() <= 200)
+          && (data.tasks is list)
+          && (!data.keys().hasAll(['operationsManagerName']) || (data.operationsManagerName is string && data.operationsManagerName.size() <= 200))
+          && (!data.keys().hasAll(['createdAt']) || (data.createdAt is timestamp))
+          && (!data.keys().hasAll(['updatedAt']) || (data.updatedAt is timestamp));
+    }
+
+    match /dailyWorkPlans/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id) && isValidDailyWorkPlan(incoming())
+        && (!incoming().keys().hasAll(['createdAt']) || incoming().createdAt == request.time);
+      allow update: if isVerified() && isValidDailyWorkPlan(incoming())
+        && (incoming().updatedAt == request.time || isAdmin());
+      allow delete: if isAdmin() || isVerified();
+    }
+
+    // ----------------------------------------------------------------------
+    // /dailyAttendanceSchedules/{id}
+    // ----------------------------------------------------------------------
+    function isValidDailyAttendanceSchedule(data) {
+      return (data.projectName is string && data.projectName.size() <= 200)
+          && (data.projectLocation is string && data.projectLocation.size() <= 200)
+          && (data.prepTime is string && data.prepTime.size() <= 50)
+          && (data.month is string && data.month.size() <= 7)
+          && (data.employees is list)
+          && (!data.keys().hasAll(['createdAt']) || (data.createdAt is timestamp))
+          && (!data.keys().hasAll(['updatedAt']) || (data.updatedAt is timestamp));
+    }
+
+    match /dailyAttendanceSchedules/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id) && isValidDailyAttendanceSchedule(incoming())
+        && (!incoming().keys().hasAll(['createdAt']) || incoming().createdAt == request.time);
+      allow update: if isVerified() && isValidDailyAttendanceSchedule(incoming())
+        && (incoming().updatedAt == request.time || isAdmin());
+      allow delete: if isAdmin() || isVerified();
+    }
+
+    // ----------------------------------------------------------------------
+    // /dailyPlanningReports/{id}
+    // ----------------------------------------------------------------------
+    match /dailyPlanningReports/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id);
+      allow update: if isVerified();
+      allow delete: if isAdmin() || isVerified();
+    }
+    
+    // ----------------------------------------------------------------------
+    // /app_data/{id}
+    // ----------------------------------------------------------------------
+    match /app_data/{id} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /costSheets/{id} { allow read, write: if isSignedIn(); }
+    match /resources/{id} { allow read, write: if isSignedIn(); }
+    match /assets/{id} { allow read, write: if isSignedIn(); }
+    match /varianceReports/{id} { allow read, write: if isSignedIn(); }
+    match /project_daily_outputs/{id} { allow read, write: if isSignedIn(); }
+    match /productivity_records/{id} { allow read, write: if isSignedIn(); }
+    match /payroll_periods/{id} { allow read, write: if isSignedIn(); }
+  }
+}
