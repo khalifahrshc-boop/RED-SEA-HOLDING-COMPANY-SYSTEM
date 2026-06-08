@@ -436,14 +436,19 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <motion.div 
-              initial={{ x: '-100%' }}
+              initial={{ x: isRtl ? '100%' : '-100%' }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              className="w-[85vw] max-w-sm h-full bg-white shadow-2xl flex flex-col"
+              exit={{ x: isRtl ? '100%' : '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className={cn(
+                "w-[85vw] max-w-sm h-full bg-white shadow-2xl flex flex-col absolute top-0 bottom-0",
+                isRtl ? "right-0" : "left-0"
+              )}
               onClick={e => e.stopPropagation()}
             >
-              <div className="h-[80px] border-b-4 border-red-600 flex items-center justify-between px-6 bg-slate-50 shrink-0 cursor-pointer" onClick={() => { onViewChange('dashboard'); setIsMobileMenuOpen(false); }}>
-                <div className="flex items-center gap-2">
+              {/* Drawer Header */}
+              <div className="h-[80px] border-b border-slate-100 flex items-center justify-between px-6 bg-slate-50/80 shrink-0">
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => { onViewChange('dashboard'); setIsMobileMenuOpen(false); }}>
                   {company?.logo && (
                     <img 
                       src={company.logo} 
@@ -453,77 +458,181 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
                     />
                   )}
                   <span className="text-xl font-bold text-red-600 tracking-tight">REDSEA</span>
+                  <span className="text-sm font-light text-slate-400">| RETAIL</span>
                 </div>
-                <div className="flex items-center gap-2">
-           <button onClick={() => setActiveCenter('messages')} className="p-2 text-slate-400 relative">
-             <MessageSquare className="w-5 h-5" />
-             {notifications.filter(n => !n.read && (n.type === 'Request' || n.type === 'Alert' || n.type === 'Message')).length > 0 && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-             )}
-           </button>
-           <button onClick={() => setActiveCenter('notifications')} className="p-2 text-slate-400 relative">
-             <Bell className="w-5 h-5" />
-             {notifications.filter(n => !n.read && n.type !== 'Request' && n.type !== 'Alert' && n.type !== 'Message').length > 0 && (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-             )}
-           </button>
-                   <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-slate-200 rounded-lg transition-colors">
-                     <X className="w-6 h-6 text-slate-500" />
-                   </button>
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => { setActiveCenter('messages'); setIsMobileMenuOpen(false); }} 
+                    className="p-2 text-slate-400 hover:text-red-500 relative"
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                    {notifications.filter(n => !n.read && (n.type === 'Request' || n.type === 'Alert' || n.type === 'Message')).length > 0 && (
+                      <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => { setActiveCenter('notifications'); setIsMobileMenuOpen(false); }} 
+                    className="p-2 text-slate-400 hover:text-red-500 relative"
+                  >
+                    <Bell className="w-5 h-5" />
+                    {notifications.filter(n => !n.read && n.type !== 'Request' && n.type !== 'Alert' && n.type !== 'Message').length > 0 && (
+                      <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => setIsMobileMenuOpen(false)} 
+                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors ml-1"
+                  >
+                    <X className="w-5 h-5 text-slate-500" />
+                  </button>
                 </div>
               </div>
-              <nav className="p-4 space-y-2 overflow-y-auto flex-1">
-                {CATEGORIES.map((category) => {
-                  const categoryItems = navItems.filter(item => category.views.includes(item.id));
-                  if (categoryItems.length === 0) return null;
 
-                  const isExpanded = expandedCategories[category.title];
-
-                  return (
-                    <div key={category.title} className="space-y-1">
-                      <button
-                        onClick={() => toggleCategory(category.title)}
-                        className="w-full flex items-center justify-between px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest"
-                      >
-                        {category.title}
-                        <span className="text-slate-300">{isExpanded ? '−' : '+'}</span>
-                      </button>
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            {categoryItems.map((item, index) => {
-                              const isActive = activeView === item.id;
-                              return (
-                                <button
-                                  key={item.id}
-                                  onClick={() => {
-                                    onViewChange(item.id as View);
-                                    setIsMobileMenuOpen(false);
-                                  }}
-                                  className={cn(
-                                    "w-full flex items-center gap-4 px-4 py-3.5 rounded-lg text-sm transition-all mb-1",
-                                    isActive 
-                                      ? "bg-red-50 text-red-700 font-bold" 
-                                      : "text-slate-600 hover:bg-slate-100"
-                                  )}
-                                >
-                                  <item.icon className="w-5 h-5 shrink-0 opacity-70" />
-                                  <span>{item.label}</span>
-                                </button>
-                              );
-                            })}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+              {/* Drawer Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                
+                {/* Mobile Specific Time Filters and Highlights */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
+                  <div className="flex justify-between items-center text-xs font-medium text-slate-400">
+                    <span onClick={() => setTimeFilter('Day')} className={cn("cursor-pointer py-1 px-2 rounded transition-colors", timeFilter === 'Day' ? "text-red-600 bg-white font-bold shadow-xs" : "hover:text-slate-600")}>Day</span>
+                    <span onClick={() => setTimeFilter('Week')} className={cn("cursor-pointer py-1 px-2 rounded transition-colors", timeFilter === 'Week' ? "text-red-600 bg-white font-bold shadow-xs" : "hover:text-slate-600")}>Week</span>
+                    <span onClick={() => setTimeFilter('Month')} className={cn("cursor-pointer py-1 px-2 rounded transition-colors", timeFilter === 'Month' ? "text-red-600 bg-white font-bold shadow-xs" : "hover:text-slate-600")}>Month</span>
+                    <span onClick={() => setTimeFilter('Year')} className={cn("cursor-pointer py-1 px-2 rounded transition-colors", timeFilter === 'Year' ? "text-red-600 bg-white font-bold shadow-xs" : "hover:text-slate-600")}>Year</span>
+                  </div>
+                  
+                  <div className="bg-red-600 text-white p-3.5 rounded-lg bg-gradient-to-br from-red-500 to-red-700 shadow-sm flex items-center justify-between">
+                    <div>
+                      <div className="text-xl font-bold leading-none tracking-tight">{dateTop}</div>
+                      <div className="text-[9px] uppercase tracking-widest opacity-80 mt-1">{dateBottom}</div>
                     </div>
-                  );
-                })}
-              </nav>
+                    <CalendarCheck className="w-5 h-5 opacity-80" />
+                  </div>
+
+                  <div className="flex justify-between items-center text-[11px] font-medium text-slate-400 border-t border-slate-200/60 pt-3">
+                    <div className="flex gap-3">
+                      <span onClick={() => setViewFilter('Views')} className={cn("cursor-pointer transition-colors", viewFilter === 'Views' ? "text-red-600 font-bold" : "hover:text-slate-600")}>Views</span>
+                      <span onClick={() => setViewFilter('Reports')} className={cn("cursor-pointer transition-colors", viewFilter === 'Reports' ? "text-red-600 font-bold" : "hover:text-slate-600")}>Reports</span>
+                    </div>
+                    <div className="flex gap-2 bg-slate-200/50 p-0.5 rounded text-[10px]">
+                      <span onClick={() => setSubFilter('Total')} className={cn("px-1.5 py-0.5 rounded cursor-pointer", subFilter === 'Total' ? "bg-white text-slate-800 font-bold" : "opacity-70")}>Total</span>
+                      <span onClick={() => setSubFilter('Sections')} className={cn("px-1.5 py-0.5 rounded cursor-pointer", subFilter === 'Sections' ? "bg-white text-slate-800 font-bold" : "opacity-70")}>Sections</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Module Search */}
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input 
+                    type="text" 
+                    placeholder="Search module" 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-150 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                  />
+                </div>
+
+                {/* Category Navigation List */}
+                <nav className="space-y-2">
+                  {CATEGORIES.map((category) => {
+                    const categoryItems = navItems.filter(item => category.views.includes(item.id));
+                    if (categoryItems.length === 0) return null;
+
+                    const isExpanded = expandedCategories[category.title];
+
+                    return (
+                      <div key={category.title} className="space-y-1 border-b border-slate-100 pb-2 last:border-b-0">
+                        <button
+                          onClick={() => toggleCategory(category.title)}
+                          className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors"
+                        >
+                          {category.title}
+                          <span className="text-slate-300">{isExpanded ? '−' : '+'}</span>
+                        </button>
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              {categoryItems.map((item) => {
+                                const isActive = activeView === item.id;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    onClick={() => {
+                                      onViewChange(item.id as View);
+                                      setIsMobileMenuOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all mb-0.5",
+                                      isActive 
+                                        ? "bg-red-50 border-l-2 border-red-500 text-red-700 font-bold" 
+                                        : "text-slate-600 hover:bg-slate-100"
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-3 pr-2 truncate">
+                                      <item.icon className="w-4 h-4 shrink-0 opacity-70" />
+                                      <span className="truncate">{item.label}</span>
+                                    </div>
+                                    {isActive && <div className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
+                                  </button>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Drawer Sticky Footer with User Profile and Controls */}
+              <div className="border-t border-slate-150 p-4 bg-slate-50 flex flex-col gap-3 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-200 rounded-full overflow-hidden relative border border-slate-200 shrink-0">
+                    <img src="https://ui-avatars.com/api/?name=User&background=f1f5f9&color=64748b" alt="User" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+                  </div>
+                  <div className="text-xs overflow-hidden leading-tight">
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Logged In</span>
+                    <span className="text-slate-700 font-bold block truncate">{userData?.name || 'Administrator'}</span>
+                    <span className="text-red-600 font-medium text-[9px] uppercase tracking-widest block">{userData?.department || 'Administrator'} UNIT</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-100 text-xs">
+                  <span className="text-slate-400 font-medium">System Language:</span>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      className={cn("px-2 py-1 rounded text-xs font-bold transition-all", language === 'en' ? "bg-red-50 text-red-600" : "text-slate-400 hover:text-slate-600")}
+                      onClick={() => language !== 'en' && onLanguageToggle()}
+                    >
+                      EN
+                    </button>
+                    <button 
+                      className={cn("px-2 py-1 rounded text-xs font-bold transition-all", language === 'ar' ? "bg-red-50 text-red-600" : "text-slate-400 hover:text-slate-600")}
+                      onClick={() => language !== 'ar' && onLanguageToggle()}
+                    >
+                      AR
+                    </button>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    logOut();
+                  }} 
+                  className="w-full py-2 bg-white hover:bg-red-50 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-100 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>{isRtl ? 'تسجيل الخروج (Sign Out)' : 'Sign Out'}</span>
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
