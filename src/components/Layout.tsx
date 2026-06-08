@@ -48,14 +48,14 @@ interface LayoutProps {
   company?: any;
 }
 
-const getNavItems = (t: any) => [
+const getNavItems = (t: any, language: Language) => [
   { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard },
   { id: 'daily-planning', label: 'Daily Progress (DPR)', icon: CalendarCheck },
   { id: 'planning', label: 'Planning', icon: CalendarCheck },
   { id: 'projects', label: t.projects, icon: Construction },
-  { id: 'hr', label: t.hr, icon: Users },
-  { id: 'payroll', label: 'Payroll Manager', icon: ReceiptIndianRupee },
-  { id: 'attendance', label: 'Attendance', icon: CalendarCheck },
+  { id: 'hr', label: language === 'ar' ? 'الموظفين (Employees)' : 'Employees', icon: Users },
+  { id: 'payroll', label: language === 'ar' ? 'مسؤول الرواتب' : 'Payroll Manager', icon: ReceiptIndianRupee },
+  { id: 'attendance', label: language === 'ar' ? 'الحضور والغياب' : 'Attendance', icon: CalendarCheck },
   { id: 'productivity', label: 'Daily Output', icon: Hammer },
   { id: 'additional-costs', label: 'Add. Costs', icon: History },
   { id: 'daily-expenditures', label: 'Expenditures', icon: Coins },
@@ -152,7 +152,7 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
     settings: { dept: 'system', section: 'settings' }
   };
 
-  const navItems = getNavItems(t)
+  const navItems = getNavItems(t, language)
     .filter(item => {
       const perm = VIEW_MAP[item.id];
       if (!perm) return false;
@@ -168,7 +168,7 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
     { title: 'Human Resources', views: ['hr', 'attendance', 'payroll'] },
     { title: 'Projects', views: ['projects', 'project-charter', 'planning', 'daily-planning', 'contractor-claims', 'productivity'] },
     { title: 'Internal Administration', views: ['equipment', 'accommodation', 'risk'] },
-    { title: 'External Administration', views: ['contracts', 'inventory'] },
+    { title: 'External Administration', views: ['procurement', 'contracts', 'inventory'] },
     { title: 'System', views: ['settings', 'user-guide'] }
   ];
 

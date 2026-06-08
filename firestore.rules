@@ -328,6 +328,16 @@ service cloud.firestore {
     }
     
     // ----------------------------------------------------------------------
+    // /audit_logs/{id}
+    // ----------------------------------------------------------------------
+    match /audit_logs/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      // logs shouldn't be fully mutable or deleted normally, but admin might clear them
+      allow update, delete: if isAdmin();
+    }
+    
+    // ----------------------------------------------------------------------
     // /app_data/{id}
     // ----------------------------------------------------------------------
     match /app_data/{id} {

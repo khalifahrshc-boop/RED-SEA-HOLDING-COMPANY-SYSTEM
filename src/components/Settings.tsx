@@ -26,18 +26,13 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useTranslation, Language } from "../lib/translations";
-import {
-  CompanyData,
-  AuditLog,
-  UserData as UserDataInterface,
-  UserPermissions,
-  SectionPermission,
-  DepartmentPermission,
-} from "../types";
+import { CompanyData, AuditLog, UserData as UserDataInterface, UserPermissions, SectionPermission, DepartmentPermission } from "../types";
+import { createAuditLog } from "../lib/utils";
 import { db, handleFirestoreError, OperationType, storage } from "../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useFirestoreCollection } from "../hooks/useFirestore";
 import {
   collection,
   onSnapshot,
@@ -120,7 +115,7 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
   >("company");
 
   const [users, setUsers] = React.useState<UserResponsibility[]>([]);
-  const [auditLogs] = useLocalStorage<AuditLog[]>("ares_audit_logs", []);
+  const [auditLogs] = useFirestoreCollection<AuditLog>("audit_logs", []);
   const [isEnrollModalOpen, setIsEnrollModalOpen] = React.useState(false);
   const [isEditingUserRoleOpen, setIsEditingUserRoleOpen] = React.useState<
     string | null
@@ -129,6 +124,7 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
   const [selectedFormat, setSelectedFormat] = React.useState("");
 
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [auditSearchQuery, setAuditSearchQuery] = React.useState("");
 
   const [selectedDept, setSelectedDept] = React.useState<string>("");
   const [permissionState, setPermissionState] = React.useState<UserPermissions>(
@@ -288,6 +284,20 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
         status: "Active",
         createdAt: serverTimestamp(),
       });
+      
+      createAuditLog({
+        id: Math.random().toString(36).substr(2, 9),
+        userId: user?.uid || 'system',
+        userName: userData?.name || 'System',
+        action: 'CREATED',
+        target: 'User',
+        details: {
+          en: `Enrolled new user ${formData.get("name")} in department ${departmentName}`,
+          ar: `تم تسجيل المستخدم الجديد ${formData.get("name")} في قسم ${departmentName}`,
+        },
+        status: 'Draft' 
+      });
+
       setIsEnrollModalOpen(false);
       setPermissionState({ departments: [] });
       setSelectedDept("");
@@ -439,6 +449,20 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
       await updateDoc(userRef, {
         structuredPermissions: permissionState,
       });
+
+      createAuditLog({
+        id: Math.random().toString(36).substr(2, 9),
+        userId: user?.uid || 'system',
+        userName: userData?.name || 'System',
+        action: 'UPDATED',
+        target: 'User Permissions',
+        details: {
+          en: `Updated permissions for user ID ${userId}`,
+          ar: `تم تحديث الصلاحيات للمستخدم ID ${userId}`,
+        },
+        status: 'Draft' 
+      });
+
       setIsEditingUserRoleOpen(null);
       setPermissionState({ departments: [] });
     } catch (error) {
@@ -446,9 +470,22 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
+  const handleDeleteUser = async (id: string, userName?: string) => {
     try {
       await deleteDoc(doc(db, "users", id));
+
+      createAuditLog({
+        id: Math.random().toString(36).substr(2, 9),
+        userId: user?.uid || 'system',
+        userName: userData?.name || 'System',
+        action: 'DELETED',
+        target: 'User',
+        details: {
+          en: `Deleted user ${userName || id}`,
+          ar: `تم حذف المستخدم ${userName || id}`,
+        },
+        status: 'Draft' 
+      });
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `users/${id}`);
     }
@@ -1007,7 +1044,7 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                                 Permissions
                               </button>
                               <button
-                                onClick={() => handleDeleteUser(user.id)}
+                                onClick={() => handleDeleteUser(user.id, user.name)}
                                 className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors bg-white border border-slate-200 rounded shadow-sm"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -1179,11 +1216,27 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                   Traceability matrix of all critical system interactions
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search logs..."
+                    value={auditSearchQuery}
+                    onChange={(e) => setAuditSearchQuery(e.target.value)}
+                    className="pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-red-500 w-64"
+                  />
+                </div>
                 <button
-                  onClick={() => {
-                    localStorage.removeItem("ares_audit_logs");
-                    window.location.reload();
+                  onClick={async () => {
+                    if (window.confirm("Are you sure you want to clear all audit logs?")) {
+                      try {
+                        const promises = auditLogs.map(log => deleteDoc(doc(db, "audit_logs", log.id)));
+                        await Promise.all(promises);
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }
                   }}
                   className="text-[10px] font-bold text-rose-600 uppercase tracking-widest hover:text-rose-800 transition-colors"
                 >
@@ -1225,49 +1278,67 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                     </tr>
                   ) : (
                     [...auditLogs]
+                      .filter(log => {
+                        if (!auditSearchQuery) return true;
+                        const query = auditSearchQuery.toLowerCase();
+                        const detailsMatch = typeof log.details === 'string'
+                          ? log.details.toLowerCase().includes(query)
+                          : (log.details?.en?.toLowerCase().includes(query) || log.details?.ar?.toLowerCase().includes(query));
+                        return (
+                          log.action?.toLowerCase().includes(query) ||
+                          log.target?.toLowerCase().includes(query) ||
+                          log.userName?.toLowerCase().includes(query) ||
+                          detailsMatch
+                        );
+                      })
                       .sort(
                         (a, b) =>
                           new Date(b.timestamp).getTime() -
                           new Date(a.timestamp).getTime(),
                       )
-                      .map((log) => (
-                        <tr
-                          key={log.id}
-                          className="hover:bg-slate-50/50 transition-colors"
-                        >
-                          <td className="px-8 py-3 text-slate-500 font-mono">
-                            {new Date(log.timestamp).toLocaleString()}
-                          </td>
-                          <td className="px-8 py-3 font-bold text-slate-700">
-                            {log.userName}
-                          </td>
-                          <td className="px-8 py-3">
-                            <span
-                              className={cn(
-                                "px-2 py-0.5 rounded text-[9px] font-bold uppercase",
-                                log.action.includes("Delete")
-                                  ? "bg-red-50 text-red-700"
-                                  : log.action.includes("Update")
-                                    ? "bg-blue-50 text-blue-700"
-                                    : log.action.includes("Create")
-                                      ? "bg-emerald-50 text-emerald-700"
-                                      : "bg-slate-100 text-slate-600",
-                              )}
-                            >
-                              {log.action}
-                            </span>
-                          </td>
-                          <td className="px-8 py-3 font-medium text-slate-600">
-                            {log.target}
-                          </td>
-                          <td
-                            className="px-8 py-3 text-slate-400 max-w-xs truncate"
-                            title={log.details}
+                      .map((log) => {
+                        const displayText = typeof log.details === 'string'
+                          ? log.details
+                          : (log.details?.[language] || log.details?.en || "");
+                        return (
+                          <tr
+                            key={log.id}
+                            className="hover:bg-slate-50/50 transition-colors"
                           >
-                            {log.details}
-                          </td>
-                        </tr>
-                      ))
+                            <td className="px-8 py-3 text-slate-500 font-mono">
+                              {new Date(log.timestamp).toLocaleString()}
+                            </td>
+                            <td className="px-8 py-3 font-bold text-slate-700">
+                              {log.userName}
+                            </td>
+                            <td className="px-8 py-3">
+                              <span
+                                className={cn(
+                                  "px-2 py-0.5 rounded text-[9px] font-bold uppercase",
+                                  log.action.includes("Delete")
+                                    ? "bg-red-50 text-red-700"
+                                    : log.action.includes("Update")
+                                      ? "bg-blue-50 text-blue-700"
+                                      : log.action.includes("Create")
+                                        ? "bg-emerald-50 text-emerald-700"
+                                        : "bg-slate-100 text-slate-600",
+                                )}
+                              >
+                                {log.action}
+                              </span>
+                            </td>
+                            <td className="px-8 py-3 font-medium text-slate-600">
+                              {log.target}
+                            </td>
+                            <td
+                              className="px-8 py-3 text-slate-400 max-w-xs truncate"
+                              title={displayText}
+                            >
+                              {displayText}
+                            </td>
+                          </tr>
+                        );
+                      })
                   )}
                 </tbody>
               </table>

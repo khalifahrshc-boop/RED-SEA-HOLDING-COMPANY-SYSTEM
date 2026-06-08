@@ -544,7 +544,7 @@ export interface AuditLog {
   userName: string;
   action: string;
   target: string;
-  details: string;
+  details: any;
   timestamp: string;
 }
 

@@ -35,12 +35,27 @@ export function triggerSystemNotification(notification: any) {
   }
 }
 
-export function createAuditLog(log: any) {
+import { db } from './firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
+export async function createAuditLog(log: any) {
   try {
     const existingLogs = JSON.parse(window.localStorage.getItem('ares_audit_logs') || '[]');
     window.localStorage.setItem('ares_audit_logs', JSON.stringify([log, ...existingLogs]));
     // Trigger the custom event for useLocalStorage sync
     window.dispatchEvent(new Event('local-storage-update-ares_audit_logs'));
+
+    // Also push to Firestore asynchronously
+    try {
+      if (db) {
+        await addDoc(collection(db, 'audit_logs'), {
+          ...log,
+          timestamp: log.timestamp || serverTimestamp()
+        });
+      }
+    } catch (fsError) {
+      console.warn("Could not save audit log to Firestore:", fsError);
+    }
   } catch (error) {
     console.error("Error creating audit log:", error);
   }
