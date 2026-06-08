@@ -230,12 +230,24 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
     const file = formData.get("logoFile") as File;
     if (file && file.size > 0) {
       try {
-        const storageRef = ref(storage, `company/logo_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        newLogo = await getDownloadURL(snapshot.ref);
+        // Convert to inline Base64 data URL to prevent CORS/publication issues
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (err) => reject(err);
+          reader.readAsDataURL(file);
+        });
+        newLogo = await base64Promise;
       } catch (e) {
-        console.error("Upload error", e);
-        alert("Failed to upload logo to Firebase Storage.");
+        console.error("Base64 read error, falling back to storage helper", e);
+        try {
+          const storageRef = ref(storage, `company/logo_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`);
+          const snapshot = await uploadBytes(storageRef, file);
+          newLogo = await getDownloadURL(snapshot.ref);
+        } catch (storageError) {
+          console.error("Upload error", storageError);
+          alert("Failed to process company logo.");
+        }
       }
     }
 

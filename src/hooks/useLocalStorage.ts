@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { db, auth } from '../lib/firebase';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -33,43 +34,54 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     };
     window.addEventListener(`local-storage-update-${key}`, handleCustomUpdate);
     
-    let unsubscribe = () => {};
-    // Setup Firestore sync if authenticated
-    if (auth.currentUser && db) {
-      const docRef = doc(db, 'app_data', key);
-      
-      // Delay initialization slighty to prevent rapid re-renders on boot if offline
-      const timerId = setTimeout(() => {
-        unsubscribe = onSnapshot(docRef, (snapshot) => {
-          if (snapshot.exists()) {
-            if (skipNextFirestoreUpdate.current) {
-              skipNextFirestoreUpdate.current = false;
-              return;
-            }
-            try {
-              const dataStr = snapshot.data().data;
-              if (dataStr && dataStr !== window.localStorage.getItem(key)) {
-                 window.localStorage.setItem(key, dataStr);
-                 setStoredValue(JSON.parse(dataStr));
+    let unsubscribeFirestore = () => {};
+    let unsubscribeAuth = () => {};
+    
+    // Setup Firestore sync when authenticated (listening for auth state changes)
+    if (db && auth) {
+      unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+        // Clear previous firestore snapshot listener
+        unsubscribeFirestore();
+        unsubscribeFirestore = () => {};
+
+        if (user) {
+          const docRef = doc(db, 'app_data', key);
+          
+          // Delay initialization slighty to prevent rapid re-renders on boot if offline
+          const timerId = setTimeout(() => {
+            unsubscribeFirestore = onSnapshot(docRef, (snapshot) => {
+              if (snapshot.exists()) {
+                if (skipNextFirestoreUpdate.current) {
+                  skipNextFirestoreUpdate.current = false;
+                  return;
+                }
+                try {
+                  const dataStr = snapshot.data().data;
+                  if (dataStr && dataStr !== window.localStorage.getItem(key)) {
+                     window.localStorage.setItem(key, dataStr);
+                     setStoredValue(JSON.parse(dataStr));
+                  }
+                } catch(e) {}
               }
-            } catch(e) {}
-          }
-        }, (err) => {
-          console.warn("Firestore sync error for key", key, err);
-        });
-      }, 500);
-      
-      const prevUnsub = unsubscribe;
-      unsubscribe = () => {
-        clearTimeout(timerId);
-        prevUnsub();
-      };
+            }, (err) => {
+              console.warn("Firestore sync error for key", key, err);
+            });
+          }, 500);
+
+          const prevFirestore = unsubscribeFirestore;
+          unsubscribeFirestore = () => {
+            clearTimeout(timerId);
+            prevFirestore();
+          };
+        }
+      });
     }
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener(`local-storage-update-${key}`, handleCustomUpdate);
-      unsubscribe();
+      unsubscribeFirestore();
+      unsubscribeAuth();
     };
   }, [key]);
 

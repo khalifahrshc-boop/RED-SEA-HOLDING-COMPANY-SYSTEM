@@ -17,6 +17,7 @@ import { Project } from "../types";
 import { Language } from "../lib/translations";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { fixHtml2CanvasOklch } from "../lib/pdfUtils";
 
 interface ProjectCharterProps {
   language: Language;
@@ -204,7 +205,13 @@ export const ProjectCharter: React.FC<ProjectCharterProps> = ({
       const element = document.getElementById("charter-pdf-canvas");
       if (!element) throw new Error("PDF element not found");
 
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true,
+        onclone: (clonedDoc) => {
+          fixHtml2CanvasOklch(clonedDoc);
+        }
+      });
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
       const pdf = new jsPDF("p", "pt", "a4");

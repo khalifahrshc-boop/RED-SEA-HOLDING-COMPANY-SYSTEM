@@ -20,7 +20,7 @@ import { Language } from "../lib/translations";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import html2pdf from "html2pdf.js";
-import { cn } from "../lib/utils";
+import { cn, getCleanLogoBase64 } from "../lib/utils";
 import { fixHtml2CanvasOklch } from "../lib/pdfUtils";
 
 interface DPRData {
@@ -2464,9 +2464,9 @@ export const DailyPlanningReport: React.FC<Props> = ({
           {/* Header Block */}
           <div className="flex border border-[#94a3b8] mb-6 print:break-inside-avoid">
             <div className="w-1/4 p-4 border-r border-[#94a3b8] flex flex-col justify-center items-center">
-              {company?.logo ? (
+              {getCleanLogoBase64(company?.logo) ? (
                 <img
-                  src={company.logo}
+                  src={getCleanLogoBase64(company?.logo)}
                   alt="Logo"
                   className="max-h-16 object-contain"
                 />

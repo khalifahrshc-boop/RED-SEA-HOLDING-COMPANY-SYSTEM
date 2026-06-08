@@ -4,6 +4,7 @@ import { CompanyData } from '../types';
 import arabicReshaper from 'arabic-reshaper';
 // @ts-ignore
 import bidiFactory from 'bidi-js';
+import { getCleanLogoBase64 } from './utils';
 
 const bidi = (() => {
   try {
@@ -105,13 +106,14 @@ export const generateStandardPDF = (
   let y = 14;
   let startX = 14;
 
-  if (data.logo) {
+  const logoBase64 = getCleanLogoBase64(data.logo);
+  if (logoBase64) {
     try {
-      doc.addImage(data.logo, 'PNG', 14, 10, 30, 30);
+      doc.addImage(logoBase64, 'PNG', 14, 10, 30, 30);
       startX = 50;
       y = 20;
     } catch(e) {
-      console.error(e);
+      console.error("Could not add company logo to PDF", e);
     }
   }
 

@@ -108,3 +108,66 @@ export function generateZatcaQrClientSide(
   }
   return btoa(binaryString);
 }
+
+export function getCleanLogoBase64(companyLogoUrl?: string): string {
+  // If the logo is already a base64 Data URI, return it
+  if (companyLogoUrl && companyLogoUrl.startsWith('data:image/')) {
+    return companyLogoUrl;
+  }
+  
+  // Create a premium, polished logo representing Red Sea Holdings Company
+  const canvas = document.createElement('canvas');
+  canvas.width = 300;
+  canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Elegant Red Gradient Background Circle
+    const gradient = ctx.createLinearGradient(0, 0, 300, 300);
+    gradient.addColorStop(0, '#dc2626'); // Red Sea deep crimson red
+    gradient.addColorStop(1, '#991b1b'); // Dark red
+    ctx.fillStyle = gradient;
+    
+    // Draw a modern squircle or a sleek shield
+    ctx.beginPath();
+    ctx.roundRect(15, 15, 270, 270, 60);
+    ctx.fill();
+    
+    // Draw a stylized golden/white maritime wave/shield motif
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Wave 1
+    ctx.beginPath();
+    ctx.moveTo(70, 180);
+    ctx.bezierCurveTo(110, 150, 150, 210, 190, 180);
+    ctx.bezierCurveTo(210, 165, 220, 160, 230, 180);
+    ctx.stroke();
+
+    // Wave 2
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(80, 210);
+    ctx.bezierCurveTo(120, 180, 150, 230, 190, 210);
+    ctx.stroke();
+    
+    // Corporate Letters
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 80px "Helvetica Neue", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('RSH', 150, 115);
+    
+    // Subtle circular border
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(150, 150, 120, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  return canvas.toDataURL('image/png');
+}
+

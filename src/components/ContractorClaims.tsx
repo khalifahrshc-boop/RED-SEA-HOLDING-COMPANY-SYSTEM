@@ -14,7 +14,7 @@ import {
   Save,
   Copy,
 } from "lucide-react";
-import { cn } from "../lib/utils";
+import { cn, getCleanLogoBase64 } from "../lib/utils";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { fixHtml2CanvasOklch } from "../lib/pdfUtils";
@@ -1019,9 +1019,9 @@ export function ContractorClaims({
           {/* Header */}
           <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-6">
             <div className="flex gap-4 items-start">
-              {company?.logo ? (
+              {getCleanLogoBase64(company?.logo) ? (
                 <img
-                  src={company.logo}
+                  src={getCleanLogoBase64(company?.logo)}
                   className="w-20 h-20 object-contain mb-2"
                   alt="Company Logo"
                   referrerPolicy="no-referrer"

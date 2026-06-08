@@ -28,7 +28,7 @@ import {
   X,
   Edit3
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate, generateZatcaQrClientSide } from '@/src/lib/utils';
+import { cn, formatCurrency, formatDate, generateZatcaQrClientSide, getCleanLogoBase64 } from '@/src/lib/utils';
 import { Invoice, InvoiceItem, ProjectCostSheet, ProjectCostItem, Worker, Project, View } from '@/src/types';
 import { auth } from '../lib/firebase';
 import { useTranslation, Language } from '../lib/translations';
@@ -528,8 +528,13 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
         doc.line(100, 20, 100, 100);
 
         // Left section (Seller & Buyer)
-        if (company?.logo) {
-            doc.addImage(company.logo, 'PNG', 12, 22, 16, 16);
+        const logoBase64 = getCleanLogoBase64(company?.logo);
+        if (logoBase64) {
+            try {
+                doc.addImage(logoBase64, 'PNG', 12, 22, 16, 16);
+            } catch (logoError) {
+                console.warn("Could not draw logo in invoice PDF", logoError);
+            }
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
             doc.text(company?.name || 'Company Name', 30, 26);
@@ -813,8 +818,27 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
           invoice.total,
           invoice.tax
         );
-        const qrDataUrl = await QRCode.toDataURL(qrContent, { margin: 0 });
-        doc.addImage(qrDataUrl, 'PNG', 11, footerY + 21, 28, 28);
+        
+        let qrDataUrl = "";
+        try {
+          const qrEngine = (QRCode as any).toDataURL || ((QRCode as any).default && (QRCode as any).default.toDataURL);
+          if (typeof qrEngine === "function") {
+            qrDataUrl = await qrEngine(qrContent, { margin: 0 });
+          } else {
+            console.warn("Direct QRCode.toDataURL not found, falling back to direct call");
+            qrDataUrl = await (QRCode as any)(qrContent, { margin: 0 });
+          }
+        } catch (qrError) {
+          console.error("QR Code generation failed for invoice PDF:", qrError);
+        }
+
+        if (qrDataUrl) {
+          try {
+            doc.addImage(qrDataUrl, 'PNG', 11, footerY + 21, 28, 28);
+          } catch (addImageError) {
+            console.error("Failed to add QR image to PDF:", addImageError);
+          }
+        }
 
         // Centered Computer Generated Invoice text
         doc.setFontSize(8);
@@ -1142,15 +1166,13 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
                             </div>
                           </div>
                         )}
-                        {(inv.status === 'Approved' || inv.status === 'Sent' || !NEXT_STATUS[inv.status]) && (
-                          <button 
-                            onClick={() => handleDownloadPdf(inv)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-100 rounded bg-white transition-colors"
-                            title="Download PDF Invoice"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                        )}
+                        <button 
+                          onClick={() => handleDownloadPdf(inv)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-100 rounded bg-white transition-colors"
+                          title="Download PDF Invoice"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
                         {inv.status === 'Draft' || inv.status === 'Pending Finance' ? (
                           <button 
                             onClick={() => handleEditInvoice(inv)}

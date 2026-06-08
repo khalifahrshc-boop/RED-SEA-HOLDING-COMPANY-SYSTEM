@@ -22,7 +22,7 @@ import {
   User,
   Users
 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, getCleanLogoBase64 } from '../lib/utils';
 import { Project, DailyWorkPlan, WorkPlanTask, CompanyData, ExecutionStep } from '../types';
 import { db } from '../lib/firebase';
 import { 
@@ -321,13 +321,16 @@ export function DailyWorkPlanManager({ onClose, company, projects }: DailyWorkPl
       if (planIdx > 0) doc.addPage();
 
       // Header Branding
-      if (company?.logo) {
+      const logoBase64 = getCleanLogoBase64(company?.logo);
+      if (logoBase64) {
         try {
-          doc.addImage(company.logo, 'PNG', 14, 10, 25, 25);
-        } catch (e) { console.error(e); }
+          doc.addImage(logoBase64, 'PNG', 14, 10, 25, 25);
+        } catch (e) {
+          console.error("Could not draw logo in daily work plan PDF:", e);
+        }
       }
 
-      const headerX = company?.logo ? 45 : 14;
+      const headerX = logoBase64 ? 45 : 14;
       doc.setFontSize(22);
       doc.setTextColor(30, 41, 59); // slate-800
       doc.setFont(mainFont, 'bold');

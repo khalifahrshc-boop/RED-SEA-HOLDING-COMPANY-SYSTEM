@@ -33,7 +33,7 @@ import {
   Coffee,
   Clock
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '@/src/lib/utils';
+import { cn, formatCurrency, formatDate, getCleanLogoBase64 } from '@/src/lib/utils';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -641,13 +641,14 @@ export function Projects({
         let startX = 14;
         const data = company || {};
         
-        if (data.logo) {
+        const logoBase64 = getCleanLogoBase64(data.logo);
+        if (logoBase64) {
           try {
-            doc.addImage(data.logo, 'PNG', 14, 10, 24, 24);
+            doc.addImage(logoBase64, 'PNG', 14, 10, 24, 24);
             startX = 44;
             pageY = 18;
           } catch(e) {
-            console.error(e);
+            console.error("Could not draw logo in project PDF:", e);
           }
         }
 

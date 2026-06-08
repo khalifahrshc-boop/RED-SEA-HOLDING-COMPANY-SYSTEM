@@ -994,19 +994,29 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button onClick={() => {
-                      import('qrcode').then(QRCode => {
-                          QRCode.toDataURL(`REF:${asset.referenceNumber}|NAME:${asset.name}|SN:${asset.serialNumber}`).then(url => {
-                            import('../lib/pdfUtils').then(({ generateStandardPDF }) => {
-                                const { doc, startY } = generateStandardPDF(`ASSET BARCODE: ${asset.referenceNumber}`, company || {});
-                                let y = startY;
-                                doc.text(`Asset Name: ${asset.name}`, 14, y); y += 8;
-                                doc.text(`Model: ${asset.model}`, 14, y); y += 8;
-                                doc.text(`Serial Number: ${asset.serialNumber}`, 14, y); y += 8;
-                                doc.text(`Location: ${asset.location}`, 14, y); y += 12;
-                                doc.addImage(url, 'PNG', 14, y, 50, 50);
-                                doc.save(`Asset_Barcode_${asset.referenceNumber}.pdf`);
-                            });
-                          });
+                      import('qrcode').then(module => {
+                          const QRCodeObj = module.default || module;
+                          const toDataURL = QRCodeObj.toDataURL || (QRCodeObj as any).default?.toDataURL;
+                          if (typeof toDataURL === 'function') {
+                              toDataURL(`REF:${asset.referenceNumber}|NAME:${asset.name}|SN:${asset.serialNumber}`).then(url => {
+                                  import('../lib/pdfUtils').then(({ generateStandardPDF }) => {
+                                      const { doc, startY } = generateStandardPDF(`ASSET BARCODE: ${asset.referenceNumber}`, company || {});
+                                      let y = startY;
+                                      doc.text(`Asset Name: ${asset.name}`, 14, y); y += 8;
+                                      doc.text(`Model: ${asset.model}`, 14, y); y += 8;
+                                      doc.text(`Serial Number: ${asset.serialNumber}`, 14, y); y += 8;
+                                      doc.text(`Location: ${asset.location}`, 14, y); y += 12;
+                                      doc.addImage(url, 'PNG', 14, y, 50, 50);
+                                      doc.save(`Asset_Barcode_${asset.referenceNumber}.pdf`);
+                                  });
+                              }).catch(err => {
+                                  console.error("toDataURL failed:", err);
+                              });
+                          } else {
+                              console.error("toDataURL is not a function in imported qrcode module");
+                          }
+                      }).catch(err => {
+                          console.error("Dynamic import of qrcode failed:", err);
                       });
                   }} className="p-2 text-slate-400 hover:text-red-600 transition" title="Print Barcode PDF">
                       <Printer className="w-4 h-4" />

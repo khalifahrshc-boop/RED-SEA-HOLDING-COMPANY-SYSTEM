@@ -46,7 +46,7 @@ import {
   PieChart as PieIcon,
   Timer
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '../lib/utils';
+import { cn, formatCurrency, formatDate, getCleanLogoBase64 } from '../lib/utils';
 import { Project, Worker, ProjectResource, AttendanceSheet, AdditionalCost, DailyExpenditure, BudgetVarianceReport, ProjectTask, DailyOutputRec } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { fixHtml2CanvasOklch } from '../lib/pdfUtils';
@@ -284,10 +284,11 @@ export function ComprehensiveProjectReport({
             titlePage.style.marginBottom = '60px';
             titlePage.style.textAlign = 'center';
             
+            const logoBase64 = getCleanLogoBase64(company?.logo);
             titlePage.innerHTML = `
               <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                ${company?.logo ? `
-                  <img src="${company.logo}" style="height: 100px; width: auto; object-contain: fill; margin-bottom: 10px;" />
+                ${logoBase64 ? `
+                  <img src="${logoBase64}" style="height: 100px; width: auto; object-contain: fill; margin-bottom: 10px;" />
                 ` : `
                   <div style="background-color: #dc2626; color: white; padding: 20px 40px; border-radius: 20px; font-weight: 900; font-size: 24px; margin-bottom: 20px;">
                     ${company?.name || 'ARES MATRIX CORE'}

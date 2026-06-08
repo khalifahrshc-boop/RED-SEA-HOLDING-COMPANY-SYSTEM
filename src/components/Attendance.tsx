@@ -18,7 +18,7 @@ import {
   Users,
   ChevronDown
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '../lib/utils';
+import { cn, formatCurrency, formatDate, getCleanLogoBase64 } from '../lib/utils';
 import { Project, Worker, AttendanceSheet, AttendanceRecord, AttendanceStatus, CompanyData } from '../types';
 import { useTranslation, Language } from '../lib/translations';
 import { Printer, Copy } from 'lucide-react';
@@ -1240,9 +1240,9 @@ export function Attendance({ projects, workers, attendanceSheets, setAttendanceS
                   {/* Header Section */}
                   <div className="flex justify-between items-start border-b border-slate-200 pb-5 mb-5">
                     <div className="flex items-center gap-4">
-                      {company?.logo ? (
+                      {getCleanLogoBase64(company?.logo) ? (
                         <img 
-                          src={company.logo} 
+                          src={getCleanLogoBase64(company?.logo)} 
                           className="w-16 h-16 object-contain" 
                           alt="Logo" 
                           referrerPolicy="no-referrer"

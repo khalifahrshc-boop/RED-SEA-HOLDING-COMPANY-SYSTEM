@@ -10,7 +10,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Cell, PieChart, Pie, Cell as PieCell
 } from 'recharts';
-import { cn, formatCurrency, formatDate } from '@/src/lib/utils';
+import { cn, formatCurrency, formatDate, getCleanLogoBase64 } from '@/src/lib/utils';
 import { 
   PayrollPeriod, PayrollRecord, Worker, Project, PayrollStatus, CompanyData 
 } from '@/src/types';
@@ -325,9 +325,10 @@ export function PayrollManager({ workers, projects, company, language }: Payroll
     
     // Header
     let startX = 105;
-    if (company?.logo) {
+    const logoBase64 = getCleanLogoBase64(company?.logo);
+    if (logoBase64) {
       try {
-        doc.addImage(company.logo, 'PNG', 14, 15, 25, 25);
+        doc.addImage(logoBase64, 'PNG', 14, 15, 25, 25);
       } catch (e) {
         console.error("Could not add company logo", e);
       }

@@ -18,7 +18,7 @@ import {
   ChevronDown,
   Download
 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, getCleanLogoBase64 } from '../lib/utils';
 import { WorkAreaGroup, WorkAreaWorker, CompanyData } from '../types';
 import { db } from '../lib/firebase';
 import { 
@@ -204,23 +204,24 @@ export function WorkAreaGroupManager({ onClose, company }: WorkAreaGroupManagerP
       doc.setFontSize(18);
       doc.setTextColor(40);
       
-      if (company?.logo) {
+      const logoBase64 = getCleanLogoBase64(company?.logo);
+      if (logoBase64) {
         try {
-          doc.addImage(company.logo, 'PNG', 14, 10, 30, 30);
+          doc.addImage(logoBase64, 'PNG', 14, 10, 30, 30);
         } catch (e) {
           console.error("Could not add company logo to PDF", e);
         }
       }
 
-      doc.text(company?.name || 'WORK AREA GROUP REPORT', company?.logo ? 50 : 14, 22);
+      doc.text(company?.name || 'WORK AREA GROUP REPORT', logoBase64 ? 50 : 14, 22);
       
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Group Number: ${group.groupNumber}`, company?.logo ? 50 : 14, 30);
-      doc.text(`Work Location: ${group.workLocation}`, company?.logo ? 50 : 14, 35);
-      doc.text(`Period: ${group.workDurationFrom} to ${group.workDurationTo}`, company?.logo ? 50 : 14, 40);
-      doc.text(`Shift Start: ${group.shiftStartTime}`, company?.logo ? 50 : 14, 45);
-      doc.text(`Total Personnel: ${group.workers.length}`, company?.logo ? 50 : 14, 50);
+      doc.text(`Group Number: ${group.groupNumber}`, logoBase64 ? 50 : 14, 30);
+      doc.text(`Work Location: ${group.workLocation}`, logoBase64 ? 50 : 14, 35);
+      doc.text(`Period: ${group.workDurationFrom} to ${group.workDurationTo}`, logoBase64 ? 50 : 14, 40);
+      doc.text(`Shift Start: ${group.shiftStartTime}`, logoBase64 ? 50 : 14, 45);
+      doc.text(`Total Personnel: ${group.workers.length}`, logoBase64 ? 50 : 14, 50);
 
       // Managers Metadata
       doc.setFontSize(8);
