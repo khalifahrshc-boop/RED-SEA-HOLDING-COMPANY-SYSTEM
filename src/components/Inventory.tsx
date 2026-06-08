@@ -138,6 +138,7 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
       location: formData.get('location') as string,
       value: Number(formData.get('value')),
       projectId: projectId,
+      accountingApproved: false,
     };
 
     if (editingAsset) {

@@ -23,6 +23,8 @@ export interface Project {
   attendancePrepTime: string; // e.g. "07:00"
   attendanceCloseTime: string; // e.g. "09:00"
   dailyBudget: number; // Daily allocated limit
+  projectManagerName?: string;
+  projectManagerContact?: string;
   clientName?: string;
   clientInfo?: ClientInfo;
   productivityMetrics?: { id: string; targetTask: string; unitMeasurement: string; defaultUnitCost: number; defaultDailyQuota: number; }[];

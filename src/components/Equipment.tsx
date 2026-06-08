@@ -1468,9 +1468,9 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Select Item from Main Warehouse</label>
                   <select required name="assetId" defaultValue="" className="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none">
                     <option value="" disabled>Select Equipment / Material</option>
-                    {assets.filter(a => (!a.projectId || a.projectId === 'MAIN') && a.accountingApproved !== false).map(a => (
+                    {assets.filter(a => !a.projectId || a.projectId === 'MAIN').map(a => (
                         <option key={a.id} value={a.id}>
-                            {a.name} ({a.referenceNumber || a.serialNumber}) - MAIN
+                            {a.name} ({a.referenceNumber || a.serialNumber}) - MAIN {a.accountingApproved === false ? '[PENDING]' : ''}
                         </option>
                     ))}
                   </select>
@@ -1514,9 +1514,9 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Select Item from Warehouse</label>
                   <select required name="assetId" defaultValue={editingReport?.assetId || ''} className="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-red-500 outline-none">
                     <option value="" disabled>Select Equipment / Material</option>
-                    {visibleAssets.filter(a => a.accountingApproved !== false).map(a => (
+                    {visibleAssets.map(a => (
                         <option key={a.id} value={a.id}>
-                            {a.name} ({a.referenceNumber || a.serialNumber}) - Available: {a.quantity || 0} {a.unit || 'Item'}
+                            {a.name} ({a.referenceNumber || a.serialNumber}) - Available: {a.quantity || 0} {a.unit || 'Item'} {a.accountingApproved === false ? '[PENDING]' : ''}
                         </option>
                     ))}
                   </select>
@@ -1578,9 +1578,9 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Select Equipment / Material</label>
                   <select required name="assetId" defaultValue="" className="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500 outline-none">
                     <option value="" disabled>Select Equipment / Material</option>
-                    {visibleAssets.filter(a => a.accountingApproved !== false).map(a => (
+                    {visibleAssets.map(a => (
                         <option key={a.id} value={a.id}>
-                            {a.name} ({a.referenceNumber || a.serialNumber})
+                            {a.name} ({a.referenceNumber || a.serialNumber}) {a.accountingApproved === false ? '[PENDING]' : ''}
                         </option>
                     ))}
                   </select>
@@ -1638,9 +1638,9 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Select Item from Warehouse</label>
                   <select required name="assetId" defaultValue="" className="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-rose-500 outline-none">
                     <option value="" disabled>Select Equipment / Material</option>
-                    {visibleAssets.filter(a => a.accountingApproved !== false).map(a => (
+                    {visibleAssets.map(a => (
                         <option key={a.id} value={a.id}>
-                            {a.name} ({a.referenceNumber || a.serialNumber}) - Available: {a.quantity || 0} {a.unit || 'Item'}
+                            {a.name} ({a.referenceNumber || a.serialNumber}) - Available: {a.quantity || 0} {a.unit || 'Item'} {a.accountingApproved === false ? '[PENDING]' : ''}
                         </option>
                     ))}
                   </select>

@@ -497,7 +497,16 @@ export function DailyReportsManager({ projects, company, language }: DailyReport
         contractValue: foundProj.contractValue ? foundProj.contractValue.toString() : '',
         location: 'Site Location A'
       },
-      clientInfo: foundProj.clientInfo || currentReport.clientInfo
+      clientInfo: foundProj.clientInfo || currentReport.clientInfo,
+      approvals: currentReport.approvals.map(appr => {
+        if (appr.position === 'Project Manager' && foundProj.projectManagerName) {
+          return { ...appr, name: foundProj.projectManagerName };
+        }
+        if (appr.position === 'Client Representative' && foundProj.clientInfo?.clientRepresentative) {
+          return { ...appr, name: foundProj.clientInfo.clientRepresentative };
+        }
+        return appr;
+      })
     });
   };
 
