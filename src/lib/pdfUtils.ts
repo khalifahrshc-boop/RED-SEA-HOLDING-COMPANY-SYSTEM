@@ -64,9 +64,15 @@ export const loadArabicFont = async (doc: jsPDF) => {
     const fontList = doc.getFontList();
     if (fontList['Amiri']) return true;
 
-    // Try both lowercase and mixed case to be sure
-    const response = await fetch('/api/fonts/amiri-regular');
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    let response;
+    try {
+      response = await fetch('/api/fonts/amiri-regular');
+      if (!response.ok) throw new Error("Local API font endpoint unreachable");
+    } catch (apiErr) {
+      console.warn('API font endpoint failed, trying public jsDelivr CDN direct fetch:', apiErr);
+      response = await fetch('https://cdn.jsdelivr.net/gh/googlefonts/amiri@main/fonts/ttf/Amiri-Regular.ttf');
+      if (!response.ok) throw new Error(`CDN font load failed with status: ${response.status}`);
+    }
     
     const arrayBuffer = await response.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);

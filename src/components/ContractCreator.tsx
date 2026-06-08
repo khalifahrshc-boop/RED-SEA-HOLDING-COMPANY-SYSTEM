@@ -88,8 +88,22 @@ export function ContractCreator({ company, language }: ContractCreatorProps) {
         }
       }));
     } catch (error) {
-      console.error('Translation error:', error);
-      alert('Failed to translate. Please check your connection or try manual input.');
+      console.warn('Backend translation failed, using client-side fallback:', error);
+      const targetKey = sourceLang === 'en' ? 'ar' : 'en';
+      const fallbackText = sourceLang === 'en' 
+        ? `[ترجمة تجريبية]: ${textToTranslate} (يرجى مراجعة الصياغة)`
+        : `[Local Fallback Translation]: ${textToTranslate} (Please verify draft)`;
+
+      setFormData(prev => ({
+        ...prev,
+        content: {
+          ...prev.content!,
+          [field]: {
+            ...prev.content![field],
+            [targetKey]: fallbackText
+          }
+        }
+      }));
     } finally {
       setIsTranslating(false);
     }

@@ -28,7 +28,7 @@ import {
   X,
   Edit3
 } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '@/src/lib/utils';
+import { cn, formatCurrency, formatDate, generateZatcaQrClientSide } from '@/src/lib/utils';
 import { Invoice, InvoiceItem, ProjectCostSheet, ProjectCostItem, Worker, Project, View } from '@/src/types';
 import { auth } from '../lib/firebase';
 import { useTranslation, Language } from '../lib/translations';
@@ -403,24 +403,35 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
   
         // If moving to Approved, generate ZATCA QR
         if (next === 'Approved') {
-          const response = await fetch('/api/finance/generate-zatca-qr', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sellerName: "RED SEA HOLDING COMPANY SYSTEM",
-              vatRegistration: "312345678900003",
-              timestamp: new Date().toISOString(),
-              total: invoice.total,
-              vatTotal: invoice.tax
-            })
-          });
+          try {
+            const response = await fetch('/api/finance/generate-zatca-qr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sellerName: "RED SEA HOLDING COMPANY SYSTEM",
+                vatRegistration: "312345678900003",
+                timestamp: new Date().toISOString(),
+                total: invoice.total,
+                vatTotal: invoice.tax
+              })
+            });
 
-          if (!response.ok) {
-            throw new Error(`ZATCA QR generation failed: ${response.statusText}`);
+            if (!response.ok) {
+              throw new Error(`ZATCA QR generation failed: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            qrCodeData = data.qrCode;
+          } catch (apiError) {
+            console.warn("API ZATCA QR generation failed, falling back to client-side generation:", apiError);
+            qrCodeData = generateZatcaQrClientSide(
+              "RED SEA HOLDING COMPANY SYSTEM",
+              "312345678900003",
+              new Date().toISOString(),
+              invoice.total,
+              invoice.tax
+            );
           }
-
-          const data = await response.json();
-          qrCodeData = data.qrCode;
         }
   
         setInvoices(prev => prev.map(inv => {
