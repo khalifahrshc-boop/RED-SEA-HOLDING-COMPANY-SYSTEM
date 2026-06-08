@@ -518,17 +518,31 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
       try {
         const doc = new jsPDF();
         
+        const isPurchase = invoice.type === 'Purchase';
+
         doc.setFont("helvetica", "bold");
         doc.setFontSize(14);
-        doc.text("Tax Invoice", 105, 15, { align: "center" });
+        doc.text(isPurchase ? "Tax Invoice (Purchase)" : "Tax Invoice", 105, 15, { align: "center" });
 
         // Outer Upper Box
         doc.setLineWidth(0.3);
         doc.rect(10, 20, 190, 80);
         doc.line(100, 20, 100, 100);
 
+        // Dynamically compute Seller and Buyer details for ZATCA alignment
+        const sellerName = isPurchase ? (invoice.recipientName || 'Supplier') : (company?.name || 'RED SEA HOLDING COMPANY SYSTEM');
+        const sellerVat = isPurchase ? (invoice.recipientTaxId || '300000000000003') : (company?.vatNumber || '312345678900003');
+        const sellerCr = isPurchase ? '' : (company?.crNumber || '');
+        const sellerPhone = isPurchase ? '' : (company?.phone || '');
+        const sellerWeb = isPurchase ? '' : (company?.website || '');
+        const sellerAddress = isPurchase ? (invoice.recipientAddress || 'Saudi Arabia') : (company?.headquarters || 'Saudi Arabia');
+
+        const buyerName = isPurchase ? (company?.name || 'RED SEA HOLDING COMPANY SYSTEM') : (invoice.recipientName || 'Abdul Traders');
+        const buyerVat = isPurchase ? (company?.vatNumber || '312345678900003') : (invoice.recipientTaxId || '098765432123456');
+        const buyerAddress = isPurchase ? (company?.headquarters || 'Saudi Arabia') : (invoice.recipientAddress || 'Saudi Arabia');
+
         // Left section (Seller & Buyer)
-        const logoBase64 = getCleanLogoBase64(company?.logo);
+        const logoBase64 = !isPurchase ? getCleanLogoBase64(company?.logo) : null;
         if (logoBase64) {
             try {
                 doc.addImage(logoBase64, 'PNG', 12, 22, 16, 16);
@@ -537,25 +551,34 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
             }
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
-            doc.text(company?.name || 'Company Name', 30, 26);
+            doc.text(sellerName, 30, 26);
             doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
-            doc.text(`VAT No. : ${company?.vatNumber || '123456789012345'}`, 30, 31);
-            doc.text(`CR No.  : ${company?.crNumber || ''}`, 30, 35);
+            doc.text(`VAT No. : ${sellerVat}`, 30, 31);
+            if (sellerCr) {
+                doc.text(`CR No.  : ${sellerCr}`, 30, 35);
+            }
         } else {
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
-            doc.text(company?.name || 'Company Name', 12, 26);
+            doc.text(sellerName, 12, 26);
             doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
-            doc.text(`VAT No. : ${company?.vatNumber || '123456789012345'}`, 12, 31);
-            doc.text(`CR No.  : ${company?.crNumber || ''}`, 12, 35);
+            doc.text(`VAT No. : ${sellerVat}`, 12, 31);
+            if (sellerCr) {
+                doc.text(`CR No.  : ${sellerCr}`, 12, 35);
+            }
         }
         
         doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
-        doc.text(`Tel: ${company?.phone || ''} | Web: ${company?.website || ''}`, 12, 42);
-        doc.text(`Dept: ${company?.department || ''}`, 12, 46);
+        if (isPurchase) {
+            const splitSellerAddr = doc.splitTextToSize(`Address: ${sellerAddress?.replace(/\n/g, ', ')}`, 85);
+            doc.text(splitSellerAddr, 12, 40);
+        } else {
+            doc.text(`Tel: ${sellerPhone} | Web: ${sellerWeb}`, 12, 42);
+            doc.text(`Dept: ${company?.department || ''}`, 12, 46);
+        }
         const issuer = auth.currentUser?.displayName || auth.currentUser?.email || 'System User';
         doc.text(`Issuer: ${issuer}`, 12, 50);
 
@@ -563,17 +586,17 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
         
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
-        doc.text("Buyer / Consignee", 12, 58);
+        doc.text(isPurchase ? "Buyer / Consignee (Our Company)" : "Buyer / Consignee", 12, 58);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text(invoice.recipientName || 'Abdul Traders', 12, 63);
+        doc.text(buyerName, 12, 63);
         
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
         doc.text("Country      : Saudi Arabia", 12, 69);
-        doc.text(`VAT No.      : ${invoice.recipientTaxId || '098765432123456'}`, 12, 74);
+        doc.text(`VAT No.      : ${buyerVat}`, 12, 74);
         
-        let recipientAddr = invoice.recipientAddress?.replace(/\n/g, ', ') || 'Saudi Arabia';
+        let recipientAddr = buyerAddress.replace(/\n/g, ', ');
         const splitAddr = doc.splitTextToSize(`Address      : ${recipientAddr}`, 85);
         doc.text(splitAddr, 12, 79);
 
@@ -589,7 +612,7 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
 
         // Box 1
         doc.setFontSize(8);
-        doc.text("Invoice No.", 102, 24);
+        doc.text(isPurchase ? "Purchase Inv No." : "Invoice No.", 102, 24);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.text(invoice.id, 102, 29);
@@ -803,13 +826,13 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
         
         doc.text("Customer's Seal and Signature", 42, footerY + 24);
         doc.setFont("helvetica", "bold");
-        doc.text(`for ${company?.name || 'Ali Enterprises'}`, 198, footerY + 24, {align: "right"});
+        doc.text(isPurchase ? `for ${buyerName}` : `for ${sellerName}`, 198, footerY + 24, {align: "right"});
         doc.setFont("helvetica", "normal");
         doc.text("Authorised Signatory", 198, footerY + 48, {align: "right"});
 
         // ZATCA Compliant QR Code (Saudi Arabia Zakat, Tax and Customs Authority)
-        const compName = company?.name || 'RED SEA HOLDING COMPANY SYSTEM';
-        const vatReg = company?.vatNumber || '312345678900003';
+        const compName = sellerName;
+        const vatReg = sellerVat;
         const isoTimestamp = getZatcaTimestamp(invoice.date, invoice.createdAt);
         const qrContent = generateZatcaBase64(
           compName,
