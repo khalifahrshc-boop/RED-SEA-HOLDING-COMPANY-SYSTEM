@@ -1326,7 +1326,7 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
               <div className="border border-slate-300 rounded-lg overflow-hidden bg-white">
                 <table className="w-full text-left border-collapse bg-white">
                   <thead>
-                    <tr className="bg-slate-905 text-slate-900 bg-slate-100 border-b border-slate-300 text-[7px] font-black uppercase">
+                    <tr className="bg-slate-100 border-b border-slate-300 text-[7px] font-black uppercase">
                       <th className="py-1 px-1.5 border-r border-slate-200">{language === 'ar' ? 'الموظف / العامل' : 'Deployed Personnel'}</th>
                       <th className="py-1 px-1.5 text-center border-r border-slate-200">{language === 'ar' ? 'التبعية / الشركة' : 'Company / Affiliation'}</th>
                       <th className="py-1 px-1.5 text-center border-r border-slate-200">{language === 'ar' ? 'المهنة' : 'Occupation'}</th>
@@ -1366,9 +1366,9 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
                           </td>
 
                           {/* 1 to 31 states */}
-                          {Array.from({ length: 31 }, (_, dayIdx) => {
-                            const dStr = (dayIdx + 1).toString();
-                            const rec = emp.days[dStr];
+                          {Array.from({ length: 31 }, (_, dIdx) => {
+                            const dayIdx = dIdx + 1;
+                            const rec = emp.days[dayIdx.toString()];
                             const isPresent = rec && rec.present;
                             return (
                               <td 
