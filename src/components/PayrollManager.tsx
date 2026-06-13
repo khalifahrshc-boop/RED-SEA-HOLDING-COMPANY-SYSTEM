@@ -883,7 +883,7 @@ export function PayrollManager({ workers, projects, company, language }: Payroll
           </p>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 mt-8 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex items-center gap-2 mt-8 w-full overflow-x-auto pb-2 whitespace-nowrap px-1">
             {['Dashboard', 'Control', 'Archive'].map((tab) => (
               <button
                 key={tab}

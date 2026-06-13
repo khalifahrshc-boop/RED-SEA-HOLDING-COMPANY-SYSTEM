@@ -1845,7 +1845,7 @@ export function Projects({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 border-b border-slate-100 mb-8 print:hidden overflow-x-auto">
+                <div className="flex items-center gap-1 border-b border-slate-100 mb-8 print:hidden w-full overflow-x-auto whitespace-nowrap">
                   {(['Analytics', 'Roadmap', 'Personnel', 'Resources', 'Financial', 'Productivity Metrics', 'Daily Output'] as const).map((tab) => (
                     <button
                       key={tab}

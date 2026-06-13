@@ -81,7 +81,7 @@ const initialAssets: Asset[] = [
 ];
 
 export function Equipment({ language, projects, company, assets, setAssets }: EquipmentProps) {
-  const { userData } = useAuth();
+  const { userData, hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<'inventory' | 'dispatch' | 'return' | 'destruction' | 'requests'>('inventory');
   const [dispatchReports, setDispatchReports] = useLocalStorage<DispatchReport[]>('ares_dispatch_reports', []);
   const [returnReports, setReturnReports] = useLocalStorage<ReturnReport[]>('ares_return_reports', []);
@@ -119,15 +119,19 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                  asset.condition,
                  asset.status,
                  asset.location,
-                 `${asset.quantity !== undefined ? asset.quantity : 1} ${asset.unit || 'Item'}`
+                 `${asset.quantity !== undefined ? asset.quantity : 1} ${asset.unit || 'Item'}`,
+                 asset.ownershipType === 'Rented' 
+                   ? `${asset.dailyCost ? formatCurrency(asset.dailyCost) : '0.00'}/Day` 
+                   : (asset.value ? formatCurrency(asset.value) : '0.00')
              ];
         });
 
         applyAutoTable(doc, {
             startY: y,
-            head: [['Ref No.', 'Name', 'Category', 'Condition', 'Status', 'Location', 'Qty']],
+            head: [['Ref No.', 'Name', 'Category', 'Condition', 'Status', 'Location', 'Qty', 'Value/Cost']],
             body: tableData,
-            styles: { fontSize: 8 },
+            styles: { fontSize: 7, cellPadding: 2 },
+            headStyles: { fillColor: [220, 38, 38] } // Red header to match theme
         });
 
         const finalY = (doc as any).lastAutoTable.finalY + 20;
@@ -136,6 +140,228 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
         doc.text('Authorized Signature: _______________________', 14, finalY);
 
         doc.save('Selected_Assets_List.pdf');
+    });
+  };
+
+  const handlePrintRequest = (req: TransferRequest) => {
+    const asset = assets.find(a => a.id === req.assetId);
+    import('../lib/pdfUtils').then(({ generateStandardPDF }) => {
+        const { doc, startY } = generateStandardPDF('MATERIAL TRANSFER REQUEST', company || {});
+        let y = startY;
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`REQUEST ID: ${req.id}`, 14, y); y += 10;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Date: ${new Date(req.requestDate).toLocaleDateString()}`, 14, y);
+        doc.text(`Status: ${req.status}`, 120, y); y += 10;
+        
+        doc.line(14, y, 196, y); y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Item Description:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${asset?.name || 'Unknown'} (${asset?.referenceNumber || '-'})`, 50, y); y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Quantity Requested:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${req.requestedQuantity} ${asset?.unit || 'Units'}`, 50, y); y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Origin Project:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Main Warehouse', 50, y); y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Destination Project:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${req.projectId}`, 50, y); y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Notes:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${req.notes || '-'}`, 50, y); y += 15;
+        
+        doc.line(14, y, 196, y); y += 15;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Approvals:', 14, y); y += 10;
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Warehouse Approved by: ${req.warehouseApprovedBy || 'Pending'}`, 14, y); y += 10;
+        doc.text(`Accounting Approved by: ${req.accountingApprovedBy || 'Pending'}`, 14, y); y += 20;
+
+        doc.text('Authorized Signature: _______________________', 14, y);
+        doc.save(`Transfer_Request_${req.id}.pdf`);
+    });
+  };
+
+  const handlePrintDispatchReport = (report: DispatchReport) => {
+    import('../lib/pdfUtils').then(({ generateStandardPDF }) => {
+        const { doc, startY } = generateStandardPDF('EQUIPMENT DISPATCH REPORT', company || {});
+        let y = startY;
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`DISPATCH ID: ${report.id}`, 14, y); y += 10;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Date: ${report.date}`, 14, y);
+        doc.text(`Time: ${report.time || '-'}`, 120, y); y += 10;
+        
+        doc.line(14, y, 196, y); y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipment Name:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.equipmentName}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipment No:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.equipmentNumber}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Quantity:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.quantity} ${report.unit}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Destination:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.location}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Recipient:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.recipientName || '-'}`, 50, y); y += 12;
+        
+        doc.line(14, y, 196, y); y += 15;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Verification & Signatures:', 14, y); y += 15;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Sender: ${report.senderName || 'Authorized User'}`, 14, y);
+        doc.text('Signature: ________________', 100, y); y += 15;
+        
+        doc.text(`Recipient: ${report.recipientName || '-'}`, 14, y);
+        doc.text('Signature: ________________', 100, y);
+        
+        doc.save(`Dispatch_Report_${report.id}.pdf`);
+    });
+  };
+
+  const handlePrintReturnReport = (report: ReturnReport) => {
+    import('../lib/pdfUtils').then(({ generateStandardPDF }) => {
+        const { doc, startY } = generateStandardPDF('EQUIPMENT RETURN REPORT', company || {});
+        let y = startY;
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`RETURN ID: ${report.id}`, 14, y); y += 10;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Date: ${report.date}`, 14, y);
+        doc.text(`Time: ${report.time || '-'}`, 120, y); y += 10;
+        
+        doc.line(14, y, 196, y); y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipment Name:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.equipmentName}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipment No:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.equipmentNumber}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Quantity:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.quantity} ${report.unit}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Condition:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.condition}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Return Name:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.returnName}`, 50, y); y += 8;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Reason:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.reason}`, 50, y); y += 12;
+        
+        doc.line(14, y, 196, y); y += 15;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Verification & Signatures:', 14, y); y += 15;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Returner: ${report.returnName}`, 14, y);
+        doc.text('Signature: ________________', 100, y); y += 15;
+        
+        doc.text('Receiver (WH): ________________', 14, y);
+        doc.text('Signature: ________________', 100, y);
+        
+        doc.save(`Return_Report_${report.id}.pdf`);
+    });
+  };
+
+  const handlePrintDestructionReport = (report: DestructionReport) => {
+    import('../lib/pdfUtils').then(({ generateStandardPDF }) => {
+        const { doc, startY } = generateStandardPDF('EQUIPMENT DESTRUCTION REPORT', company || {});
+        let y = startY;
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`DESTRUCTION ID: ${report.id}`, 14, y); y += 10;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Date: ${report.date}`, 14, y);
+        doc.text(`Time: ${report.time || '-'}`, 120, y); y += 10;
+        
+        doc.line(14, y, 196, y); y += 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Equipment Info:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.equipmentName} (${report.equipmentNumber})`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Quantity:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.quantity} ${report.unit}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Reason:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.reason}`, 50, y); y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text('Destroyed By:', 14, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${report.destroyerName} (ID: ${report.destroyerId})`, 50, y); y += 12;
+        
+        doc.line(14, y, 196, y); y += 15;
+        
+        doc.setFontSize(9);
+        doc.text('This is an official record of material destruction from inventory.', 14, y); y += 15;
+        
+        doc.setFontSize(10);
+        doc.text('Authorized Signature: _______________________', 14, y);
+        
+        doc.save(`Destruction_Report_${report.id}.pdf`);
     });
   };
 
@@ -791,57 +1017,69 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
           
           {activeTab === 'inventory' ? (
             <div className="flex items-center gap-2">
-            {selectedAssets.size > 0 && (
+            {selectedAssets.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
               <button onClick={handlePrintSelected} className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-red-100 transition-colors">
                 <Printer className="w-4 h-4" /> Print Selected
               </button>
             )}
-            <button onClick={handleExportPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-              <FileText className="w-4 h-4" /> PDF
-            </button>
-            <button onClick={handleExportExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-              <Download className="w-4 h-4" /> Excel
-            </button>
-            <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition">
-              <Plus className="w-4 h-4" /> New Asset
-            </button>
+            {hasPermission('internal_admin', 'equipment', 'export') && (
+              <>
+                <button onClick={handleExportPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+                  <FileText className="w-4 h-4" /> PDF
+                </button>
+                <button onClick={handleExportExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+                  <Download className="w-4 h-4" /> Excel
+                </button>
+              </>
+            )}
+            {hasPermission('internal_admin', 'equipment', 'create') && (
+              <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition">
+                <Plus className="w-4 h-4" /> New Asset
+              </button>
+            )}
           </div>
         ) : activeTab === 'dispatch' ? (
           <div className="flex items-center gap-2">
-             {selectedReports.size > 0 && (
+             {selectedReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
               <button onClick={handlePrintSelectedDispatch} className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-red-100 transition-colors">
                 <Printer className="w-4 h-4" /> Print Selected ({selectedReports.size})
               </button>
             )}
-            <button onClick={() => { setEditingReport(null); setIsDispatchModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition">
-              <Plus className="w-4 h-4" /> New Dispatch Report
-            </button>
+            {hasPermission('internal_admin', 'equipment', 'dispatch') && (
+              <button onClick={() => { setEditingReport(null); setIsDispatchModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition">
+                <Plus className="w-4 h-4" /> New Dispatch Report
+              </button>
+            )}
           </div>
         ) : activeTab === 'return' ? (
           <div className="flex items-center gap-2">
-            {selectedReturnReports.size > 0 && (
+            {selectedReturnReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
               <button onClick={handlePrintSelectedReturn} className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-emerald-100 transition-colors">
                 <Printer className="w-4 h-4" /> Print Selected ({selectedReturnReports.size})
               </button>
             )}
-            <button onClick={() => { setEditingReturnReport(null); setIsReturnModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-emerald-700 transition">
-              <Plus className="w-4 h-4" /> Receive Return
-            </button>
+            {hasPermission('internal_admin', 'equipment', 'return') && (
+              <button onClick={() => { setEditingReturnReport(null); setIsReturnModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-emerald-700 transition">
+                <Plus className="w-4 h-4" /> Receive Return
+              </button>
+            )}
           </div>
         ) : activeTab === 'destruction' ? (
           <div className="flex items-center gap-2">
-            {selectedDestructionReports.size > 0 && (
+            {selectedDestructionReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
               <button onClick={handlePrintSelectedDestruction} className="flex items-center gap-2 px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-rose-100 transition-colors">
                 <Printer className="w-4 h-4" /> Print Selected ({selectedDestructionReports.size})
               </button>
             )}
-            <button onClick={() => setIsDestructionModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-rose-700 transition">
-              <Plus className="w-4 h-4" /> Declare Destruction
-            </button>
+            {hasPermission('internal_admin', 'equipment', 'destruction') && (
+              <button onClick={() => setIsDestructionModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-rose-700 transition">
+                <Plus className="w-4 h-4" /> Declare Destruction
+              </button>
+            )}
           </div>
         ) : (
            <div className="flex items-center gap-2">
-             {activeWarehouse !== 'MAIN' && (
+             {activeWarehouse !== 'MAIN' && hasPermission('internal_admin', 'equipment', 'manage') && (
                 <button onClick={() => setIsRequestModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-blue-700 transition">
                   <Plus className="w-4 h-4" /> Request Material
                 </button>
@@ -851,7 +1089,7 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
         </div>
       </div>
 
-      <div className="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto min-w-max">
+      <div className="flex items-center gap-2 border-b border-slate-200 mb-6 w-full overflow-x-auto">
         <button
           onClick={() => setActiveTab('inventory')}
           className={cn(
@@ -993,49 +1231,53 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   )}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button onClick={() => {
-                      import('qrcode').then(module => {
-                          const QRCodeObj = module.default || module;
-                          const toDataURL = QRCodeObj.toDataURL || (QRCodeObj as any).default?.toDataURL;
-                          if (typeof toDataURL === 'function') {
-                              toDataURL(`REF:${asset.referenceNumber}|NAME:${asset.name}|SN:${asset.serialNumber}`).then(url => {
-                                  import('../lib/pdfUtils').then(({ generateStandardPDF }) => {
-                                      const { doc, startY } = generateStandardPDF(`ASSET BARCODE: ${asset.referenceNumber}`, company || {});
-                                      let y = startY;
-                                      doc.text(`Asset Name: ${asset.name}`, 14, y); y += 8;
-                                      doc.text(`Model: ${asset.model}`, 14, y); y += 8;
-                                      doc.text(`Serial Number: ${asset.serialNumber}`, 14, y); y += 8;
-                                      doc.text(`Location: ${asset.location}`, 14, y); y += 12;
-                                      doc.addImage(url, 'PNG', 14, y, 50, 50);
-                                      doc.save(`Asset_Barcode_${asset.referenceNumber}.pdf`);
+                  <div className="flex justify-end gap-1">
+                    {hasPermission('internal_admin', 'equipment', 'print') && (
+                      <button onClick={() => {
+                          import('qrcode').then(module => {
+                              const QRCodeObj = module.default || module;
+                              const toDataURL = QRCodeObj.toDataURL || (QRCodeObj as any).default?.toDataURL;
+                              if (typeof toDataURL === 'function') {
+                                  toDataURL(`REF:${asset.referenceNumber}|NAME:${asset.name}|SN:${asset.serialNumber}`).then(url => {
+                                      import('../lib/pdfUtils').then(({ generateStandardPDF }) => {
+                                          const { doc, startY } = generateStandardPDF(`ASSET BARCODE: ${asset.referenceNumber}`, company || {});
+                                          let y = startY;
+                                          doc.text(`Asset Name: ${asset.name}`, 14, y); y += 8;
+                                          doc.text(`Model: ${asset.model}`, 14, y); y += 8;
+                                          doc.text(`Serial Number: ${asset.serialNumber}`, 14, y); y += 8;
+                                          doc.text(`Location: ${asset.location}`, 14, y); y += 12;
+                                          doc.addImage(url, 'PNG', 14, y, 50, 50);
+                                          doc.save(`Asset_Barcode_${asset.referenceNumber}.pdf`);
+                                      });
+                                  }).catch(err => {
+                                      console.error("toDataURL failed:", err);
                                   });
-                              }).catch(err => {
-                                  console.error("toDataURL failed:", err);
-                              });
-                          } else {
-                              console.error("toDataURL is not a function in imported qrcode module");
-                          }
-                      }).catch(err => {
-                          console.error("Dynamic import of qrcode failed:", err);
-                      });
-                  }} className="p-2 text-slate-400 hover:text-red-600 transition" title="Print Barcode PDF">
-                      <Printer className="w-4 h-4" />
-                  </button>
-                  {asset.accountingApproved === false && (userData?.role === 'Accounting' || userData?.role === 'Administrator') && (
-                     <button onClick={() => handleApproveAsset(asset.id)} className="p-2 text-slate-400 hover:text-emerald-600 transition" title="Approve">
-                         <CheckCircle className="w-4 h-4" />
-                     </button>
-                  )}
-                  {(asset.accountingApproved === false || userData?.role === 'Administrator') && (
-                     <>
+                              } else {
+                                  console.error("toDataURL is not a function in imported qrcode module");
+                              }
+                          }).catch(err => {
+                              console.error("Dynamic import of qrcode failed:", err);
+                          });
+                      }} className="p-2 text-slate-400 hover:text-red-600 transition" title="Print Barcode PDF">
+                          <Printer className="w-4 h-4" />
+                      </button>
+                    )}
+                    {asset.accountingApproved === false && hasPermission('accounting', 'finance', 'approve') && (
+                       <button onClick={() => handleApproveAsset(asset.id)} className="p-2 text-slate-400 hover:text-emerald-600 transition" title="Approve">
+                           <CheckCircle className="w-4 h-4" />
+                       </button>
+                    )}
+                    {hasPermission('internal_admin', 'equipment', 'edit') && (
                         <button onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-red-600 transition" title="Edit">
                           <Edit2 className="w-4 h-4" />
                         </button>
+                    )}
+                    {hasPermission('internal_admin', 'equipment', 'delete') && (
                         <button onClick={() => handleDelete(asset.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
                           <Trash2 className="w-4 h-4" />
                         </button>
-                     </>
-                  )}
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -1083,7 +1325,13 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                            {(req.status || '').replace('_', ' ')}
                         </span>
                      </td>
-                     <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right">
+                         <div className="flex justify-end gap-1">
+                            {hasPermission('internal_admin', 'equipment', 'print') && (
+                               <button onClick={() => handlePrintRequest(req)} className="p-2 text-slate-400 hover:text-red-400 transition" title="Print Request Certificate">
+                                  <Printer className="w-4 h-4" />
+                               </button>
+                            )}
                         {activeWarehouse === 'MAIN' && (userData?.role === 'Warehouse' || userData?.role === 'Administrator') && req.status === 'Pending' && (
                            <button onClick={() => handleWarehouseApproveRequest(req.id)} className="text-xs font-bold text-blue-600 uppercase tracking-widest hover:text-blue-800 mr-4">
                                Approve (WH)
@@ -1094,10 +1342,11 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                                Approve (Acc)
                            </button>
                         )}
-                        <button onClick={() => handleDeleteRequest(req.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
-                           <Trash2 className="w-4 h-4" />
-                        </button>
-                     </td>
+                         <button onClick={() => handleDeleteRequest(req.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                         </button>
+                      </div>
+                   </td>
                   </tr>
                   )
                })}
@@ -1172,14 +1421,21 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   <td className="px-6 py-4 text-sm text-slate-600">
                     {report.location}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button onClick={() => { setEditingReport(report); setIsDispatchModalOpen(true); }} className="p-2 text-slate-400 hover:text-red-600 transition" title="Edit">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDeleteDispatch(report.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+                   <td className="px-6 py-4 text-right">
+                     <div className="flex justify-end gap-1">
+                        {hasPermission('internal_admin', 'equipment', 'print') && (
+                           <button onClick={() => handlePrintDispatchReport(report)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Print Dispatch Certificate">
+                              <Printer className="w-4 h-4" />
+                           </button>
+                        )}
+                        <button onClick={() => { setEditingReport(report); setIsDispatchModalOpen(true); }} className="p-2 text-slate-400 hover:text-red-600 transition" title="Edit">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteDispatch(report.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                     </div>
+                   </td>
                 </tr>
               ))}
               {dispatchReports.length === 0 && (
@@ -1258,10 +1514,19 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   <td className="px-6 py-4 text-sm text-slate-600">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 w-max">{report.condition}</span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button onClick={() => handleDeleteReturn(report.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                   <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-1">
+                      {hasPermission('internal_admin', 'equipment', 'print') && (
+                        <button onClick={() => handlePrintReturnReport(report)} className="p-2 text-slate-400 hover:text-emerald-600 transition" title="Print Return Certificate">
+                          <Printer className="w-4 h-4" />
+                        </button>
+                      )}
+                      {hasPermission('internal_admin', 'equipment', 'delete') && (
+                        <button onClick={() => handleDeleteReturn(report.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1340,10 +1605,19 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                       <span className="text-xs text-slate-500 mt-0.5">ID: {report.destroyerId} | EMP: {report.employeeNumber}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button onClick={() => handleDeleteDestruction(report.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                   <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-1">
+                      {hasPermission('internal_admin', 'equipment', 'print') && (
+                        <button onClick={() => handlePrintDestructionReport(report)} className="p-2 text-slate-400 hover:text-rose-600 transition" title="Print Destruction Certificate">
+                          <Printer className="w-4 h-4" />
+                        </button>
+                      )}
+                      {hasPermission('internal_admin', 'equipment', 'delete') && (
+                        <button onClick={() => handleDeleteDestruction(report.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -843,115 +843,63 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
                         type="button"
                         onClick={() => setSelectedEmpIndex(index)}
                         className={cn(
-                          "w-full text-left p-3.5 rounded-lg border transition-all cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-3 relative overflow-hidden",
+                          "w-full text-left p-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-4 relative overflow-hidden",
                           isSelected 
-                            ? "bg-white border-red-500 shadow-sm ring-1 ring-red-550" 
-                            : "bg-white border-slate-200 hover:bg-slate-50 shadow-xs"
+                            ? "bg-white border-red-200 shadow-sm ring-1 ring-red-500/20" 
+                            : "bg-slate-50 border-slate-200 hover:bg-slate-100/50 shadow-xs"
                         )}
                       >
                         {/* Selector marker */}
-                        {isSelected && <div className="absolute top-0 bottom-0 left-0 w-1 bg-red-600" />}
+                        {isSelected && <div className="absolute top-0 bottom-0 left-0 w-1.5 bg-red-600" />}
 
                         {/* Employee selectors */}
-                        <div className="flex-1 space-y-2.5">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <div className="w-8 h-8 rounded bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs shrink-0 border border-red-100">
+                              {emp.name ? emp.name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-[11px] font-black text-slate-900 truncate uppercase tracking-tight">
+                                {emp.name || "UNNAMED ROSTER ROW"}
+                              </h4>
+                              <p className="text-[9px] text-slate-500 truncate font-medium">
+                                {emp.occupation || "NO OCCUPATION SET"} • {emp.badgeNumber || "NO BADGE"}
+                              </p>
+                            </div>
+                          </div>
                           
-                          {/* Worker dropdown config */}
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <span className="text-[7.5px] font-black text-slate-400 block uppercase tracking-wider leading-none mb-1">{dict.employeeName}</span>
-                              <select
-                                value={emp.workerId || ''}
-                                onChange={e => {
-                                  if (e.target.value) {
-                                    handleSelectSystemWorker(index, e.target.value);
-                                  } else {
-                                    handleUpdateEmpField(index, 'workerId', '');
-                                  }
-                                }}
-                                className="w-full bg-slate-50 border border-slate-200 rounded py-0.5 px-1.5 text-[10px] font-bold outline-none"
-                              >
-                                <option value="">{dict.selectWorker}</option>
-                                {workers.map(w => (
-                                  <option key={w.id} value={w.id}>{w.name} ({w.role})</option>
-                                ))}
-                              </select>
-                              <input 
-                                type="text"
-                                required
-                                value={emp.name}
-                                onChange={e => handleUpdateEmpField(index, 'name', e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded py-0.5 px-1.5 text-[10px] mt-1 outline-none"
-                                placeholder="Employee Roster Name"
-                              />
-                            </div>
-
-                            <div>
-                              <span className="text-[7.5px] font-black text-slate-400 block uppercase tracking-wider leading-none mb-1">{dict.badgeNumber}</span>
-                              <input 
-                                type="text"
-                                required
-                                value={emp.badgeNumber}
-                                onChange={e => handleUpdateEmpField(index, 'badgeNumber', e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded py-0.5 px-1.5 text-[10px] font-mono font-bold outline-none"
-                                placeholder="e.g. B8381"
-                              />
-                            </div>
+                          <div className="flex items-center gap-3">
+                             <div className="flex items-center gap-1">
+                               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Status:</span>
+                               <span className={cn(
+                                 "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-tighter",
+                                 statsObj.presentDays > 0 ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-400"
+                               )}>
+                                 {statsObj.presentDays > 0 ? "Active" : "New"}
+                               </span>
+                             </div>
+                             <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Days:</span>
+                               <span className="text-[9px] font-black text-slate-900">{statsObj.presentDays}</span>
+                             </div>
+                             <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Hours:</span>
+                               <span className="text-[9px] font-black text-slate-900">{statsObj.totalHours}h</span>
+                             </div>
                           </div>
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <span className="text-[7.5px] font-black text-slate-400 block uppercase tracking-wider leading-none mb-1">{dict.companyType}</span>
-                              <select
-                                value={emp.companyType}
-                                onChange={e => handleUpdateEmpField(index, 'companyType', e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded py-0.5 px-1.5 text-[9px] outline-none font-semibold"
-                              >
-                                <option value="Our Company">{dict.ourCompany}</option>
-                                <option value="Rental/External Company">{dict.rentalCompany}</option>
-                              </select>
-                              
-                              {emp.companyType === 'Rental/External Company' && (
-                                <input 
-                                  type="text"
-                                  required
-                                  value={emp.rentalCompanyName || ''}
-                                  onChange={e => handleUpdateEmpField(index, 'rentalCompanyName', e.target.value)}
-                                  placeholder={dict.rentalNamePlaceholder}
-                                  className="w-full bg-white border border-slate-200 rounded py-0.5 px-1.5 text-[9px] mt-1 outline-none"
-                                />
-                              )}
-                            </div>
-
-                            <div>
-                              <span className="text-[7.5px] font-black text-slate-400 block uppercase tracking-wider leading-none mb-1">{dict.occupation}</span>
-                              <input 
-                                type="text"
-                                required
-                                value={emp.occupation}
-                                onChange={e => handleUpdateEmpField(index, 'occupation', e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded py-0.5 px-1.5 text-[10px] outline-none"
-                                placeholder="e.g. Mechanical Welder"
-                              />
-                            </div>
-                          </div>
-
                         </div>
 
-                        {/* Summaries & Trashing */}
-                        <div className="flex md:flex-col items-end gap-2 shrink-0 justify-between self-stretch pt-2 md:pt-0 md:pl-2">
+                        {/* Configuration & Trashing */}
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             type="button"
                             onClick={() => handleDeleteEmpRow(index)}
-                            className="p-1 text-slate-400 hover:text-red-600 transition-colors border border-slate-200 hover:border-red-100 rounded bg-white hover:bg-red-50 shadow-xs"
+                            className="p-1.5 text-slate-400 hover:text-red-600 transition-colors border border-slate-200 hover:border-red-100 rounded-md bg-white hover:bg-red-50"
                             title="Delete Employee Row"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
-                          
-                          <div className="text-right text-[9px] leading-tight font-mono text-slate-500 space-y-0.5">
-                            <p>{dict.totalPresentDays} <strong className="text-slate-800">{statsObj.presentDays}</strong></p>
-                            <p>{dict.totalWorkedHours} <strong className="text-slate-800">{statsObj.totalHours}h</strong></p>
-                          </div>
+                          <ChevronRight className={cn("w-4 h-4 text-slate-300 transition-transform", isSelected ? "translate-x-1 text-red-400" : "")} />
                         </div>
 
                       </div>
@@ -982,20 +930,112 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
                 ) : (
                   <div className="flex-1 flex flex-col overflow-hidden bg-white border border-slate-200 rounded-xl shadow-sm p-4">
                     
-                    {/* Header focused info */}
-                    <div className="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center shrink-0">
-                      <div>
-                        <h4 className="text-xs font-black uppercase text-slate-900">
-                          {formEmployees[selectedEmpIndex].name || "Roster Row " + (selectedEmpIndex + 1)}
-                        </h4>
-                        <p className="text-[9px] font-mono text-slate-400 mt-0.5">
-                          {formEmployees[selectedEmpIndex].occupation || "—"} • Badge: {formEmployees[selectedEmpIndex].badgeNumber || "—"}
-                        </p>
+                    {/* Header focused info & Profile Editor */}
+                    <div className="border-b border-slate-100 pb-4 mb-4 space-y-4 shrink-0">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-red-200">
+                             {formEmployees[selectedEmpIndex].name ? formEmployees[selectedEmpIndex].name.charAt(0).toUpperCase() : <User className="w-6 h-6" />}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black uppercase text-slate-900 leading-tight">
+                              {formEmployees[selectedEmpIndex].name || "PERSONNEL PROFILE"}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                               <span className="text-[10px] font-bold px-2 py-0.5 bg-red-50 text-red-600 rounded">
+                                 {getEmployeeStats(formEmployees[selectedEmpIndex]).presentDays} / 31 Present
+                               </span>
+                               <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
+                                 {getEmployeeStats(formEmployees[selectedEmpIndex]).totalHours} Total Hours
+                               </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-[10px] font-bold px-2 py-0.5 bg-red-50 text-red-650 rounded">
-                          {getEmployeeStats(formEmployees[selectedEmpIndex]).presentDays} / 31 Present
-                        </span>
+
+                      {/* Profile Inline Editor */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                         <div className="space-y-3">
+                            <div>
+                               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">System Employee Liaison</label>
+                               <select
+                                 value={formEmployees[selectedEmpIndex].workerId || ''}
+                                 onChange={e => {
+                                   if (e.target.value) {
+                                     handleSelectSystemWorker(selectedEmpIndex, e.target.value);
+                                   } else {
+                                     handleUpdateEmpField(selectedEmpIndex, 'workerId', '');
+                                   }
+                                 }}
+                                 className="w-full bg-white border border-slate-200 rounded-lg py-1.5 px-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-red-500 shadow-sm"
+                               >
+                                 <option value="">{dict.selectWorker}</option>
+                                 {workers.map(w => (
+                                   <option key={w.id} value={w.id}>{w.name} ({w.role})</option>
+                                 ))}
+                               </select>
+                            </div>
+                            <div>
+                               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">{dict.employeeName}</label>
+                               <input 
+                                 type="text"
+                                 required
+                                 value={formEmployees[selectedEmpIndex].name}
+                                 onChange={e => handleUpdateEmpField(selectedEmpIndex, 'name', e.target.value)}
+                                 className="w-full bg-white border border-slate-200 rounded-lg py-1.5 px-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-red-500 shadow-sm"
+                                 placeholder="Employee Full Name"
+                               />
+                            </div>
+                         </div>
+                         <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                               <div>
+                                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">{dict.badgeNumber}</label>
+                                  <input 
+                                    type="text"
+                                    required
+                                    value={formEmployees[selectedEmpIndex].badgeNumber}
+                                    onChange={e => handleUpdateEmpField(selectedEmpIndex, 'badgeNumber', e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-lg py-1.5 px-2.5 text-xs font-mono font-bold outline-none focus:ring-1 focus:ring-red-500 shadow-sm"
+                                    placeholder="Badge #"
+                                  />
+                               </div>
+                               <div>
+                                  <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">{dict.occupation}</label>
+                                  <input 
+                                    type="text"
+                                    required
+                                    value={formEmployees[selectedEmpIndex].occupation}
+                                    onChange={e => handleUpdateEmpField(selectedEmpIndex, 'occupation', e.target.value)}
+                                    className="w-full bg-white border border-slate-200 rounded-lg py-1.5 px-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-red-500 shadow-sm"
+                                    placeholder="Position"
+                                  />
+                               </div>
+                            </div>
+                            <div>
+                               <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">{dict.companyType}</label>
+                               <div className="flex gap-2">
+                                  <select
+                                    value={formEmployees[selectedEmpIndex].companyType}
+                                    onChange={e => handleUpdateEmpField(selectedEmpIndex, 'companyType', e.target.value)}
+                                    className="flex-1 bg-white border border-slate-200 rounded-lg py-1.5 px-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-red-500 shadow-sm"
+                                  >
+                                    <option value="Our Company">{dict.ourCompany}</option>
+                                    <option value="Rental/External Company">{dict.rentalCompany}</option>
+                                  </select>
+                                  {formEmployees[selectedEmpIndex].companyType === 'Rental/External Company' && (
+                                    <input 
+                                      type="text"
+                                      required
+                                      value={formEmployees[selectedEmpIndex].rentalCompanyName || ''}
+                                      onChange={e => handleUpdateEmpField(selectedEmpIndex, 'rentalCompanyName', e.target.value)}
+                                      placeholder={dict.rentalNamePlaceholder}
+                                      className="flex-1 bg-white border border-slate-200 rounded-lg py-1.5 px-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-red-500 shadow-sm"
+                                    />
+                                  )}
+                               </div>
+                            </div>
+                         </div>
                       </div>
                     </div>
 
@@ -1260,109 +1300,111 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
           >
             <div>
               {/* Top Banner */}
-              <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-4">
+              <div className="flex justify-between items-start border-b-2 border-red-600 pb-4 mb-4">
                 <div className="flex items-center gap-4">
                   {company?.logo ? (
                     <img 
                       src={company.logo} 
-                      className="w-14 h-14 object-contain" 
+                      className="w-16 h-16 object-contain" 
                       alt="Logo" 
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-slate-900 text-white font-black flex items-center justify-center rounded text-base tracking-wider">
-                      RSHG
+                    <div className="w-14 h-14 bg-red-600 text-white font-black flex items-center justify-center rounded-lg text-lg tracking-wider shadow-lg">
+                      {company?.name ? company.name.substring(0, 2).toUpperCase() : 'RS'}
                     </div>
                   )}
                   <div>
-                    <h1 className="text-sm font-black text-slate-900 tracking-tight leading-none">
-                      {company?.name || 'RED SEA HOLDING SYSTEM ERP'}
+                    <h1 className="text-base font-black text-slate-900 tracking-tight leading-none uppercase">
+                      {company?.name || 'Enterprise Resource Portal'}
                     </h1>
-                    <p className="text-[8px] text-slate-500 font-bold mt-1 uppercase tracking-widest">
-                      {language === 'ar' ? 'سجل وكشف الحضور الشهري للمشاريع' : 'MONTHLY MULTI-PROJECT ATTENDANCE MATRIX REGISTER'}
+                    <p className="text-[9px] text-red-600 font-bold mt-1.5 uppercase tracking-widest">
+                      {language === 'ar' ? 'سجل وكشف الحضور الشهري للمشاريع' : 'MONTHLY PROJECT ATTENDANCE MATRIX REGISTER'}
                     </p>
-                    <div className="text-[7px] text-slate-400 mt-1 space-y-0.5 font-mono leading-tight">
-                      <p>CR Number / السجل التجاري: {company?.crNumber || '1010620353'}</p>
-                      <p>VAT Number / الرقم الضريبي: {company?.vatNumber || '310349823500003'}</p>
-                      <p>HQ Location / المقر الرئيسي: {company?.headquarters || 'Riyadh, Saudi Arabia'}</p>
+                    <div className="text-[7.5px] text-slate-400 mt-2 flex gap-4 font-mono leading-tight">
+                      <p>CR: {company?.crNumber || '1010620353'}</p>
+                      <p>VAT: {company?.vatNumber || '310349823500003'}</p>
+                      <p>HQ: {company?.headquarters || 'Saudi Arabia'}</p>
                     </div>
                   </div>
                 </div>
                 
                 <div className="text-right">
-                  <h2 className="text-sm font-black text-slate-900 tracking-wider uppercase leading-none">
-                    DAILY ATTENDANCE SCHEDULE
-                  </h2>
-                  <h3 className="text-[10px] font-bold text-slate-600 tracking-wider mt-1 leading-none">
-                    بيان وكشف وجدول التحضير الشهري للمشروع
+                  <div className="bg-red-600 text-white px-3 py-1 rounded inline-block mb-1">
+                    <h2 className="text-[10px] font-black tracking-wider uppercase leading-none">
+                      DAILY ATTENDANCE LOG
+                    </h2>
+                  </div>
+                  <h3 className="text-[9px] font-bold text-slate-500 tracking-wider mt-1 leading-none uppercase">
+                    Monthly Verification Control
                   </h3>
-                  <p className="text-[7.5px] font-mono text-slate-400 mt-2">
-                    MATRIX LOG ID / رمز السجل: {printedSchedule.id}
+                  <p className="text-[7.5px] font-mono text-slate-400 mt-2 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                    LOG ID: {printedSchedule.id}
                   </p>
                 </div>
               </div>
 
               {/* Metadata Grid */}
-              <div className="grid grid-cols-4 gap-4 p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 text-[9px]">
+              <div className="grid grid-cols-4 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl mb-6 text-[10px]">
                 <div>
-                  <span className="text-slate-400 block text-[7px] uppercase font-bold">Project Name / اسم المشروع</span>
+                  <span className="text-red-600 block text-[7px] uppercase font-black tracking-widest mb-1 leading-none">Project Environment</span>
                   <span className="font-bold text-slate-900">{printedSchedule.projectName}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[7px] uppercase font-bold">Project Location / موقع المشروع</span>
+                  <span className="text-red-600 block text-[7px] uppercase font-black tracking-widest mb-1 leading-none">Jobsite Location</span>
                   <span className="font-bold text-slate-900">{printedSchedule.projectLocation}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[7px] uppercase font-bold">Prep Window Time / وقت التحضير</span>
-                  <span className="font-bold text-slate-900 font-mono">{printedSchedule.prepTime}</span>
+                  <span className="text-red-600 block text-[7px] uppercase font-black tracking-widest mb-1 leading-none">Deployment Month</span>
+                  <span className="font-bold text-slate-900 font-mono tracking-tight">{printedSchedule.month}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[7px] uppercase font-bold">Roster Month / شهر التحضير</span>
-                  <span className="font-bold text-slate-900 font-mono">{printedSchedule.month}</span>
+                  <span className="text-red-600 block text-[7px] uppercase font-black tracking-widest mb-1 leading-none">Verification Time</span>
+                  <span className="font-bold text-slate-900 font-mono italic">{printedSchedule.prepTime}</span>
                 </div>
               </div>
 
               {/* Attendance days grid table */}
-              <div className="border border-slate-300 rounded-lg overflow-hidden bg-white">
+              <div className="border border-slate-300 rounded-xl overflow-hidden bg-white shadow-sm">
                 <table className="w-full text-left border-collapse bg-white">
                   <thead>
-                    <tr className="bg-slate-100 border-b border-slate-300 text-[7px] font-black uppercase">
-                      <th className="py-1 px-1.5 border-r border-slate-200">{language === 'ar' ? 'الموظف / العامل' : 'Deployed Personnel'}</th>
-                      <th className="py-1 px-1.5 text-center border-r border-slate-200">{language === 'ar' ? 'التبعية / الشركة' : 'Company / Affiliation'}</th>
-                      <th className="py-1 px-1.5 text-center border-r border-slate-200">{language === 'ar' ? 'المهنة' : 'Occupation'}</th>
-                      <th className="py-1 px-1.5 text-center border-r border-slate-200">{language === 'ar' ? 'أيام الحضور' : 'Present'}</th>
-                      <th className="py-1 px-1.5 text-center border-r border-slate-200">{language === 'ar' ? 'الساعات' : 'Hours'}</th>
+                    <tr className="bg-slate-900 text-white border-b border-slate-300 text-[7px] font-black uppercase">
+                      <th className="py-2 px-2 border-r border-slate-700">{language === 'ar' ? 'الموظف / العامل' : 'Personnel Roster'}</th>
+                      <th className="py-2 px-1 text-center border-r border-slate-700">{language === 'ar' ? 'التبعية' : 'Entity'}</th>
+                      <th className="py-2 px-1 text-center border-r border-slate-700">{language === 'ar' ? 'المهنة' : 'Position'}</th>
+                      <th className="py-2 px-1 text-center border-r border-slate-700 text-red-400 bg-slate-800">Days</th>
+                      <th className="py-2 px-1 text-center border-r border-slate-700">Hours</th>
                       
                       {/* Columns days 1 to 31 */}
                       {Array.from({ length: 31 }, (_, d) => (
-                        <th key={d} className="py-0.5 text-center border-r border-slate-200 text-[6.5px] font-mono leading-none min-w-[14px]">
+                        <th key={d} className="py-1 text-center border-r border-slate-700 text-[6.5px] font-mono leading-none min-w-[14px]">
                           {d + 1}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 text-[8.5px] font-medium">
+                  <tbody className="divide-y divide-slate-100 text-[8px] font-medium text-slate-700">
                     {printedSchedule.employees && printedSchedule.employees.map((emp, eIdx) => {
                       const empSummary = getEmployeeStats(emp);
                       return (
-                        <tr key={emp.id} className="hover:bg-slate-50">
-                          <td className="py-1 px-1.5 border-r border-slate-200">
-                            <span className="font-black text-slate-900 block">{emp.name}</span>
-                            <span className="text-[6.5px] text-slate-400 block font-mono">ID: {emp.badgeNumber || 'N/A'}</span>
+                        <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-1.5 px-2 border-r border-slate-200">
+                            <span className="font-bold text-slate-900 block truncate max-w-[120px] leading-tight uppercase">{emp.name}</span>
+                            <span className="text-[6px] text-slate-400 block font-mono">B#{emp.badgeNumber || 'N/A'}</span>
                           </td>
-                          <td className="py-1 px-1 text-center border-r border-slate-200 text-[8px]">
+                          <td className="py-1.5 px-1 text-center border-r border-slate-200 text-[7px]">
                             {emp.companyType === 'Our Company' 
-                              ? (language === 'ar' ? 'شركتنا' : 'Our Co') 
-                              : (emp.rentalCompanyName || (language === 'ar' ? 'جهة خارجية' : 'External Co'))}
+                              ? (language === 'ar' ? 'شركتنا' : 'INTERNAL') 
+                              : (emp.rentalCompanyName || (language === 'ar' ? 'جهة خارجية' : 'EXTERNAL'))}
                           </td>
-                          <td className="py-1 px-1 border-r border-slate-200 text-[8px] max-w-[80px] truncate">
+                          <td className="py-1.5 px-1 border-r border-slate-200 text-[7px] max-w-[80px] truncate uppercase font-bold text-slate-500">
                             {emp.occupation}
                           </td>
-                          <td className="py-1 px-1 text-center border-r border-slate-200 font-mono font-black text-rose-650 bg-red-50/20">
+                          <td className="py-1.5 px-1 text-center border-r border-slate-200 font-mono font-black text-red-600 bg-red-50/10">
                             {empSummary.presentDays}
                           </td>
-                          <td className="py-1 px-1 text-center border-r border-slate-200 font-mono font-black text-slate-900 bg-slate-50">
-                            {empSummary.totalHours}<span className="font-sans">{language === 'ar' ? 'س' : 'h'}</span>
+                          <td className="py-1.5 px-1 text-center border-r border-slate-200 font-mono font-black text-slate-900 bg-slate-50/50">
+                            {empSummary.totalHours}
                           </td>
 
                           {/* 1 to 31 states */}
@@ -1374,15 +1416,15 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
                               <td 
                                 key={dayIdx} 
                                 className={cn(
-                                  "p-0.5 text-center border-r border-slate-200 text-[7px] font-mono",
-                                  isPresent ? "bg-emerald-50 text-emerald-800 font-black" : "text-slate-350"
+                                  "p-1 text-center border-r border-slate-100 text-[7px] font-mono",
+                                  isPresent ? "bg-red-50 text-red-700 font-black" : "text-slate-200"
                                 )}
                               >
                                 {isPresent ? (
-                                  <div className="flex flex-col items-center justify-center leading-none gap-[1px]">
-                                    <span title="Hours">{rec.workedHours}</span>
+                                  <div className="flex flex-col items-center justify-center leading-none">
+                                    <span className="text-[8px]">{rec.workedHours}</span>
                                     {(rec.workStartTime || rec.dutyStartTime) && (
-                                      <span className="text-[4px] font-normal tracking-tighter opacity-70" title="Start Time">
+                                      <span className="text-[4.5px] font-normal tracking-tighter opacity-60 mt-0.5">
                                         {rec.workStartTime || rec.dutyStartTime}
                                       </span>
                                     )}

@@ -602,7 +602,7 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
         </div>
       </div>
 
-      <div className="flex items-center gap-1 border-b border-slate-100">
+      <div className="flex items-center gap-1 border-b border-slate-100 w-full overflow-x-auto whitespace-nowrap pb-px">
         <button
           onClick={() => setActiveTab('quotes')}
           className={cn(

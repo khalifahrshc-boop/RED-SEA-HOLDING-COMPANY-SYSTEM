@@ -50,54 +50,55 @@ const PERMISSION_MATRIX = {
   "Accounting": {
     id: "accounting",
     sections: [
-      { id: "finance", name: "Finance & Invoicing", actions: ["view", "edit", "approve"] },
-      { id: "accounting-tree", name: "Accounting Tree", actions: ["view", "edit"] },
-      { id: "expenditures", name: "Daily Expenditures", actions: ["view", "create", "edit", "approve"] },
-      { id: "additional-costs", name: "Additional Costs", actions: ["view", "create", "edit", "approve"] },
-      { id: "budget-variance", name: "Budget Variance", actions: ["view", "export"] }
+      { id: "finance", name: "Finance & Invoicing", actions: ["view", "create", "edit", "approve", "delete", "export", "print"] },
+      { id: "accounting-tree", name: "Accounting Tree", actions: ["view", "edit", "create", "delete"] },
+      { id: "expenditures", name: "Daily Expenditures", actions: ["view", "create", "edit", "approve", "delete", "export"] },
+      { id: "additional-costs", name: "Additional Costs", actions: ["view", "create", "edit", "approve", "delete", "export"] },
+      { id: "budget-variance", name: "Budget Variance / Utilization", actions: ["view", "export", "print"] }
     ]
   },
   "Human Resources": {
     id: "hr",
     sections: [
-      { id: "workforce", name: "Workforce & Employees", actions: ["view", "create", "edit", "delete"] },
-      { id: "attendance", name: "Attendance & Time Tracking", actions: ["view", "create", "edit", "delete", "record"] },
-      { id: "payroll", name: "Payroll Processing", actions: ["view", "create", "edit", "approve"] }
+      { id: "workforce", name: "Workforce & Employees", actions: ["view", "create", "edit", "delete", "export", "print"] },
+      { id: "attendance", name: "Attendance & Time Tracking", actions: ["view", "create", "edit", "delete", "record", "export", "print"] },
+      { id: "payroll", name: "Payroll Processing", actions: ["view", "create", "edit", "approve", "delete", "export", "print", "archive"] }
     ]
   },
   "Projects": {
     id: "projects",
     sections: [
-      { id: "projects", name: "Project controls & info", actions: ["view", "create", "edit", "manage"] },
-      { id: "project-charter", name: "Project Charter", actions: ["view", "create", "edit"] },
-      { id: "planning", name: "Planning & WBS", actions: ["view", "create", "edit"] },
-      { id: "daily-planning", name: "Daily Progress (DPR)", actions: ["view", "create", "edit"] },
-      { id: "contractor-claims", name: "Contractor Claims", actions: ["view", "create", "edit", "approve"] },
-      { id: "productivity", name: "Productivity Matrix", actions: ["view", "edit"] }
+      { id: "projects", name: "Project controls & info", actions: ["view", "create", "edit", "delete", "manage", "export"] },
+      { id: "project-charter", name: "Project Charter", actions: ["view", "create", "edit", "delete", "export", "print"] },
+      { id: "planning", name: "Planning & WBS", actions: ["view", "create", "edit", "delete", "export"] },
+      { id: "daily-planning", name: "Daily Progress (DPR)", actions: ["view", "create", "edit", "delete", "export", "print"] },
+      { id: "contractor-claims", name: "Contractor Claims", actions: ["view", "create", "edit", "approve", "delete", "export"] },
+      { id: "productivity", name: "Productivity Matrix", actions: ["view", "edit", "record", "export"] }
     ]
   },
-  "Internal Administration": {
+  "Operations & Logistics": {
     id: "internal_admin",
     sections: [
-      { id: "equipment", name: "Equipment Logistics", actions: ["view", "manage", "dispatch"] },
-      { id: "accommodation", name: "Accommodation", actions: ["view", "manage"] },
-      { id: "risk", name: "Safety & risk / SIR", actions: ["view", "create", "edit", "resolve"] },
-      { id: "user-guide", name: "User Guide", actions: ["view"] }
+      { id: "equipment", name: "Equipment Logistics", actions: ["view", "create", "edit", "delete", "manage", "dispatch", "return", "destruction", "export", "print"] },
+      { id: "accommodation", name: "Accommodation", actions: ["view", "manage", "create", "edit", "delete", "export"] },
+      { id: "risk", name: "Safety & risk / SIR", actions: ["view", "create", "edit", "resolve", "delete", "export", "print"] }
     ]
   },
-  "External Administration": {
+  "Supply Chain": {
     id: "external_admin",
     sections: [
-      { id: "procurement", name: "Procurement & PO", actions: ["view", "create", "edit", "issue"] },
-      { id: "contracts", name: "External Contracts", actions: ["view", "create", "edit", "finalize"] },
-      { id: "inventory", name: "Vendors & Inventory", actions: ["view", "create", "edit"] }
+      { id: "procurement", name: "Procurement & PO", actions: ["view", "create", "edit", "issue", "delete", "export", "print"] },
+      { id: "contracts", name: "External Contracts / Claims", actions: ["view", "create", "edit", "finalize", "delete", "export"] },
+      { id: "inventory", name: "Vendors & Inventory", actions: ["view", "create", "edit", "delete", "export"] },
+      { id: "daily-reports", name: "Daily Reports Manager", actions: ["view", "create", "edit", "delete", "export", "print"] }
     ]
   },
-  "System": {
+  "Admin & System": {
     id: "system",
     sections: [
-      { id: "dashboard", name: "Dashboard Overview", actions: ["view"] },
-      { id: "settings", name: "System Settings", actions: ["view", "edit_users", "edit_company", "manage_storage"] }
+      { id: "dashboard", name: "Dashboard Overview", actions: ["view", "configure"] },
+      { id: "settings", name: "System Settings", actions: ["view", "edit_users", "edit_company", "manage_storage", "edit_permissions"] },
+      { id: "user-guide", name: "User Guide", actions: ["view"] }
     ]
   }
 };
@@ -521,7 +522,7 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-1 border-b border-slate-100">
+      <div className="flex items-center gap-1 border-b border-slate-100 w-full overflow-x-auto whitespace-nowrap pb-px">
         <button
           onClick={() => setActiveTab("company")}
           className={cn(
@@ -1459,16 +1460,21 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                       <div className="space-y-6">
                         {Object.entries(PERMISSION_MATRIX).map(
                           ([deptName, deptConfig]) => (
-                            <div key={deptConfig.id} className="space-y-4 border border-slate-200 rounded-xl p-4 bg-white shadow-sm">
-                              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">{deptName}</h4>
-                              <div className="grid grid-cols-1 gap-4">
+                            <div key={deptConfig.id} className="space-y-4 border border-slate-200 rounded-xl p-5 bg-white shadow-sm overflow-hidden">
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-1.5 h-6 bg-red-600 rounded-full" />
+                                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">{deptName}</h4>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {deptConfig.sections.map((section) => (
                                   <div
                                     key={section.id}
-                                    className="glass-panel p-4 bg-slate-50 rounded-lg border border-slate-100"
+                                    className="glass-panel p-4 bg-slate-50/50 rounded-xl border border-slate-100 flex flex-col"
                                   >
-                                    <div className="flex items-center justify-between mb-3">
-                                      <h5 className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">
+                                    <div className="flex items-center justify-between mb-4">
+                                      <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
                                         {section.name}
                                       </h5>
                                       <button
@@ -1482,26 +1488,29 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                                             section.actions,
                                           );
                                         }}
-                                        className="text-[9px] font-bold text-red-600 uppercase hover:underline"
+                                        className="text-[9px] font-bold text-red-600 uppercase hover:text-red-700 transition-colors"
                                       >
-                                        Toggle All
+                                        All
                                       </button>
                                     </div>
-                                    <div className="flex flex-wrap gap-3">
+                                    <div className="grid grid-cols-2 gap-y-2.5 gap-x-3">
                                       {section.actions.map((action) => {
                                         const isChecked =
                                           permissionState.departments
                                             .find((d) => d.departmentId === deptConfig.id)
                                             ?.sections.find(
                                               (s) => s.sectionId === section.id,
-                                            )?.actions[action] || false;
+                                            )?.actions[action as any] || false;
 
                                         return (
                                           <label
                                             key={action}
-                                            className="flex items-center gap-2 cursor-pointer group"
+                                            className={cn(
+                                              "flex items-center gap-2 cursor-pointer group px-2 py-1 rounded transition-colors",
+                                              isChecked ? "bg-white shadow-xs" : "hover:bg-slate-100/50"
+                                            )}
                                           >
-                                            <div className="relative flex items-center">
+                                            <div className="relative flex items-center shrink-0">
                                               <input
                                                 type="checkbox"
                                                 checked={isChecked}
@@ -1518,10 +1527,10 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                                               />
                                               <div
                                                 className={cn(
-                                                  "w-4 h-4 border rounded transition-all flex items-center justify-center",
+                                                  "w-3.5 h-3.5 border rounded-sm transition-all flex items-center justify-center",
                                                   isChecked
-                                                    ? "bg-red-600 border-red-600"
-                                                    : "bg-white border-slate-300 group-hover:border-red-400",
+                                                    ? "bg-red-600 border-red-600 shadow-sm"
+                                                    : "bg-white border-slate-300 group-hover:border-red-400 shadow-xs",
                                                 )}
                                               >
                                                 {isChecked && (
@@ -1531,9 +1540,9 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                                             </div>
                                             <span
                                               className={cn(
-                                                "text-[10px] font-bold uppercase tracking-widest transition-colors",
+                                                "text-[9px] font-bold uppercase tracking-tighter transition-colors truncate",
                                                 isChecked
-                                                  ? "text-red-700"
+                                                  ? "text-red-700 font-black"
                                                   : "text-slate-500 group-hover:text-slate-700",
                                               )}
                                             >
@@ -1753,16 +1762,21 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                     <div className="space-y-6">
                       {Object.entries(PERMISSION_MATRIX).map(
                         ([deptName, deptConfig]) => (
-                          <div key={deptConfig.id} className="space-y-4 border border-slate-200 rounded-xl p-4 bg-white shadow-sm">
-                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">{deptName}</h4>
-                            <div className="grid grid-cols-1 gap-4">
+                          <div key={deptConfig.id} className="space-y-4 border border-slate-200 rounded-xl p-5 bg-white shadow-sm overflow-hidden">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-6 bg-red-600 rounded-full" />
+                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">{deptName}</h4>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {deptConfig.sections.map((section) => (
                                 <div
                                   key={section.id}
-                                  className="glass-panel p-4 bg-slate-50 rounded-lg border border-slate-100"
+                                  className="glass-panel p-4 bg-slate-50/50 rounded-xl border border-slate-100 flex flex-col"
                                 >
-                                  <div className="flex items-center justify-between mb-3">
-                                    <h5 className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h5 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
                                       {section.name}
                                     </h5>
                                     <button
@@ -1776,12 +1790,12 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                                           section.actions,
                                         );
                                       }}
-                                      className="text-[9px] font-bold text-red-600 uppercase hover:underline"
+                                      className="text-[9px] font-bold text-red-600 uppercase hover:text-red-700 transition-colors"
                                     >
-                                      Toggle All
+                                      All
                                     </button>
                                   </div>
-                                  <div className="flex flex-wrap gap-3">
+                                  <div className="grid grid-cols-2 gap-y-2.5 gap-x-3">
                                     {section.actions.map((action) => {
                                       const isChecked =
                                         permissionState.departments
@@ -1793,9 +1807,12 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                                       return (
                                         <label
                                           key={action}
-                                          className="flex items-center gap-2 cursor-pointer group"
+                                          className={cn(
+                                            "flex items-center gap-2 cursor-pointer group px-2 py-1 rounded transition-colors",
+                                            isChecked ? "bg-white shadow-xs" : "hover:bg-slate-100/50"
+                                          )}
                                         >
-                                          <div className="relative flex items-center">
+                                          <div className="relative flex items-center shrink-0">
                                             <input
                                               type="checkbox"
                                               checked={isChecked}
@@ -1812,10 +1829,10 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                                             />
                                             <div
                                               className={cn(
-                                                "w-4 h-4 border rounded transition-all flex items-center justify-center",
+                                                "w-3.5 h-3.5 border rounded-sm transition-all flex items-center justify-center",
                                                 isChecked
-                                                  ? "bg-red-600 border-red-600"
-                                                  : "bg-white border-slate-300 group-hover:border-red-400",
+                                                  ? "bg-red-600 border-red-600 shadow-sm"
+                                                  : "bg-white border-slate-300 group-hover:border-red-400 shadow-xs",
                                               )}
                                             >
                                               {isChecked && (
@@ -1825,9 +1842,9 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                                           </div>
                                           <span
                                             className={cn(
-                                              "text-[10px] font-bold uppercase tracking-widest transition-colors",
+                                              "text-[9px] font-bold uppercase tracking-tighter transition-colors truncate",
                                               isChecked
-                                                ? "text-red-700"
+                                                ? "text-red-700 font-black"
                                                 : "text-slate-500 group-hover:text-slate-700",
                                             )}
                                           >
