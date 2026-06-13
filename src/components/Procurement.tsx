@@ -78,6 +78,7 @@ const dummyPOs: PurchaseOrder[] = [
 ];
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAuth } from '../contexts/AuthContext';
 
 import { notificationService } from '../lib/notificationService';
 
@@ -90,6 +91,7 @@ interface ProcurementProps {
 
 export function Procurement({ projects, language, onUpdateProject, company }: ProcurementProps) {
   const { t, d } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'quotes' | 'pos'>('quotes');
   const [quotes, setQuotes] = useLocalStorage<PriceQuote[]>('ares_quotes', dummyQuotes);
   const [pos, setPos] = useLocalStorage<PurchaseOrder[]>('ares_pos', dummyPOs);
@@ -570,35 +572,39 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
           <p className="text-slate-500 text-sm italic font-medium">Managing strategic procurement and vendor commitments.</p>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={() => {
-               if (activeTab === 'quotes') {
-                 setQuotes(prev => prev.map(q => {
-                   if (q.status === 'Draft') return { ...q, status: 'Internal Review' };
-                   if (q.status === 'Internal Review') return { ...q, status: 'Awaiting Finance' };
-                   if (q.status === 'Awaiting Finance') return { ...q, status: 'Approved' };
-                   return q;
-                 }));
-               } else {
-                 setPos(prev => prev.map(p => {
-                   if (p.status === 'Draft') return { ...p, status: 'Awaiting Issuance' };
-                   if (p.status === 'Awaiting Issuance') return { ...p, status: 'Issued' };
-                   return p;
-                 }));
-               }
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-emerald-700 transition-all active:scale-95"
-          >
-            <CheckCircle2 className="w-3 h-3" />
-            Bulk Process Workflow
-          </button>
-          <button 
-            onClick={() => openForm()}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95"
-          >
-            <Plus className="w-3 h-3" />
-            {activeTab === 'quotes' ? 'New Price Quote' : 'Generate Purchase Order'}
-          </button>
+          {hasPermission('external_admin', 'procurement', 'issue') && (
+            <button 
+              onClick={() => {
+                 if (activeTab === 'quotes') {
+                   setQuotes(prev => prev.map(q => {
+                     if (q.status === 'Draft') return { ...q, status: 'Internal Review' };
+                     if (q.status === 'Internal Review') return { ...q, status: 'Awaiting Finance' };
+                     if (q.status === 'Awaiting Finance') return { ...q, status: 'Approved' };
+                     return q;
+                   }));
+                 } else {
+                   setPos(prev => prev.map(p => {
+                     if (p.status === 'Draft') return { ...p, status: 'Awaiting Issuance' };
+                     if (p.status === 'Awaiting Issuance') return { ...p, status: 'Issued' };
+                     return p;
+                   }));
+                 }
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-emerald-700 transition-all active:scale-95"
+            >
+              <CheckCircle2 className="w-3 h-3" />
+              Bulk Process Workflow
+            </button>
+          )}
+          {hasPermission('external_admin', 'procurement', 'create') && (
+            <button 
+              onClick={() => openForm()}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95"
+            >
+              <Plus className="w-3 h-3" />
+              {activeTab === 'quotes' ? 'New Price Quote' : 'Generate Purchase Order'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -696,7 +702,7 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {activeTab === 'quotes' && (
+                    {activeTab === 'quotes' && hasPermission('external_admin', 'procurement', 'issue') && (
                        <>
                         {item.status === 'Draft' && (
                           <button 
@@ -724,7 +730,7 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
                         )}
                        </>
                     )}
-                    {activeTab === 'pos' && (
+                    {activeTab === 'pos' && hasPermission('external_admin', 'procurement', 'issue') && (
                        <>
                         {item.status === 'Draft' && (
                           <button 
@@ -744,27 +750,33 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
                         )}
                        </>
                     )}
-                    <button 
-                      onClick={() => handlePrint(item)}
-                      className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
-                      title="Print Matrix"
-                    >
-                      <Printer className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => openForm(item)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"
-                      title="Edit Parameters"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(item.id, activeTab === 'quotes' ? 'quote' : 'po')}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
-                      title="Deactivate Node"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {hasPermission('external_admin', 'procurement', 'print') && (
+                      <button 
+                        onClick={() => handlePrint(item)}
+                        className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors"
+                        title="Print Matrix"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </button>
+                    )}
+                    {hasPermission('external_admin', 'procurement', 'edit') && (
+                      <button 
+                        onClick={() => openForm(item)}
+                        className="p-1.5 text-slate-400 hover:text-red-600 transition-colors"
+                        title="Edit Parameters"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {hasPermission('external_admin', 'procurement', 'delete') && (
+                      <button 
+                        onClick={() => handleDelete(item.id, activeTab === 'quotes' ? 'quote' : 'po')}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors"
+                        title="Deactivate Node"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

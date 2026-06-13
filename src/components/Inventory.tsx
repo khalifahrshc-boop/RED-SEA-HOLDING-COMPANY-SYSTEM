@@ -21,7 +21,9 @@ import {
 import { cn, formatCurrency, formatDate } from '@/src/lib/utils';
 import { Asset, Project } from '@/src/types';
 import { useTranslation, Language } from '../lib/translations';
+import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from 'xlsx';
+import { Printer } from 'lucide-react';
 
 const initialAssets: Asset[] = [
   { 
@@ -89,6 +91,7 @@ interface InventoryProps {
 
 export function Inventory({ language, projects, onUpdateProject, assets, setAssets }: InventoryProps) {
   const { t, d } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null);
@@ -208,20 +211,24 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
           <p className="text-slate-500 text-sm italic font-medium">Unified Tracking and Asset Node Identification.</p>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={exportToExcel}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-          >
-            <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
-            Export Ledger
-          </button>
-          <button 
-            onClick={() => { setEditingAsset(null); setIsModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95"
-          >
-            <Plus className="w-3 h-3" />
-            Register Asset
-          </button>
+          {hasPermission('internal_admin', 'inventory', 'export') && (
+            <button 
+              onClick={exportToExcel}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+            >
+              <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
+              Export Ledger
+            </button>
+          )}
+          {hasPermission('internal_admin', 'inventory', 'create') && (
+            <button 
+              onClick={() => { setEditingAsset(null); setIsModalOpen(true); }}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95"
+            >
+              <Plus className="w-3 h-3" />
+              Register Asset
+            </button>
+          )}
         </div>
       </div>
 
@@ -274,18 +281,22 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
                 </div>
               </div>
               <div className="flex gap-1">
-                <button 
-                  onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }}
-                  className="p-1.5 text-slate-300 hover:text-red-600 transition-colors rounded-md hover:bg-red-50"
-                >
-                  <Edit3 className="w-3 h-3" />
-                </button>
-                <button 
-                  onClick={() => handleDelete(asset.id)}
-                  className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors rounded-md hover:bg-rose-50"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
+                {hasPermission('internal_admin', 'inventory', 'edit') && (
+                  <button 
+                    onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }}
+                    className="p-1.5 text-slate-300 hover:text-red-600 transition-colors rounded-md hover:bg-red-50"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </button>
+                )}
+                {hasPermission('internal_admin', 'inventory', 'delete') && (
+                  <button 
+                    onClick={() => handleDelete(asset.id)}
+                    className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors rounded-md hover:bg-rose-50"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             </div>
 

@@ -43,6 +43,8 @@ import { generateZatcaBase64, getZatcaTimestamp } from '../lib/pdfUtils';
 
 import { notificationService } from '../lib/notificationService';
 
+import { useAuth } from '../contexts/AuthContext';
+
 type InvoiceStatus = Invoice['status'];
 type SortKey = keyof Invoice;
 
@@ -68,6 +70,7 @@ interface FinanceProps {
 
 export function Finance({ invoices, setInvoices, costSheets, setCostSheets, workers, language, projects, onUpdateProject, company, onNavigate }: FinanceProps) {
   const { t, d } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'Invoices' | 'Payrolls' | 'Costing' | 'Ledgers' | 'AccountingTree'>('Invoices');
   const [isCreatingCosting, setIsCreatingCosting] = React.useState(false);
   const [editingCostSheetId, setEditingCostSheetId] = React.useState<string | null>(null);
@@ -931,92 +934,110 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
             className="hidden" 
             accept=".xlsx, .xls"
           />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Import Excel
-          </button>
-          <button 
-            onClick={exportToExcel}
-            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Export to Excel
-          </button>
-          <button 
-            onClick={() => setIsCreatingInvoice(true)}
-            className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-semibold hover:bg-slate-800 transition-colors shadow-md flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Invoice
-          </button>
-          <button 
-            onClick={() => setActiveTab('Payrolls')}
-            className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-semibold hover:bg-red-700 transition-colors shadow-md shadow-red-100"
-          >
-            Execute Payroll
-          </button>
+          {hasPermission('accounting', 'finance', 'edit') && (
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Import Excel
+            </button>
+          )}
+          {hasPermission('accounting', 'finance', 'export') && (
+            <button 
+              onClick={exportToExcel}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Export to Excel
+            </button>
+          )}
+          {hasPermission('accounting', 'finance', 'create') && (
+            <button 
+              onClick={() => setIsCreatingInvoice(true)}
+              className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-semibold hover:bg-slate-800 transition-colors shadow-md flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Invoice
+            </button>
+          )}
+          {hasPermission('hr', 'payroll', 'create') && (
+            <button 
+              onClick={() => setActiveTab('Payrolls')}
+              className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-semibold hover:bg-red-700 transition-colors shadow-md shadow-red-100"
+            >
+              Execute Payroll
+            </button>
+          )}
         </div>
       </div>
 
       <div className="flex items-center gap-1 border-b border-slate-100 w-full overflow-x-auto whitespace-nowrap pb-px">
-        <button
-          onClick={() => setActiveTab('Invoices')}
-          className={cn(
-            "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
-            activeTab === 'Invoices' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
-          )}
-        >
-          <Receipt className="w-4 h-4" />
-          A/P Ledgers
-          {activeTab === 'Invoices' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
-        </button>
-        <button
-          onClick={() => setActiveTab('Payrolls')}
-          className={cn(
-            "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
-            activeTab === 'Payrolls' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
-          )}
-        >
-          <Users className="w-4 h-4" />
-          Payroll Cycles
-          {activeTab === 'Payrolls' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
-        </button>
-        <button
-          onClick={() => setActiveTab('Costing')}
-          className={cn(
-            "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
-            activeTab === 'Costing' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
-          )}
-        >
-          <Calculator className="w-4 h-4" />
-          Project Costing
-          {activeTab === 'Costing' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
-        </button>
-        <button
-          onClick={() => setActiveTab('Ledgers')}
-          className={cn(
-            "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
-            activeTab === 'Ledgers' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
-          )}
-        >
-          <FileText className="w-4 h-4" />
-          Employee Ledgers
-          {activeTab === 'Ledgers' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
-        </button>
-        <button
-          onClick={() => setActiveTab('AccountingTree')}
-          className={cn(
-            "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2 text-emerald-600",
-            activeTab === 'AccountingTree' ? "text-emerald-700 bg-emerald-50" : "hover:text-emerald-700 hover:bg-slate-50"
-          )}
-        >
-          <FileText className="w-4 h-4" />
-          AI Accounting Tree
-          {activeTab === 'AccountingTree' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600" />}
-        </button>
+        {hasPermission('accounting', 'finance', 'view') && (
+          <button
+            onClick={() => setActiveTab('Invoices')}
+            className={cn(
+              "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
+              activeTab === 'Invoices' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <Receipt className="w-4 h-4" />
+            A/P Ledgers
+            {activeTab === 'Invoices' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
+          </button>
+        )}
+        {hasPermission('hr', 'payroll', 'view') && (
+          <button
+            onClick={() => setActiveTab('Payrolls')}
+            className={cn(
+              "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
+              activeTab === 'Payrolls' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <Users className="w-4 h-4" />
+            Payroll Cycles
+            {activeTab === 'Payrolls' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
+          </button>
+        )}
+        {hasPermission('accounting', 'finance', 'view') && (
+          <button
+            onClick={() => setActiveTab('Costing')}
+            className={cn(
+              "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
+              activeTab === 'Costing' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <Calculator className="w-4 h-4" />
+            Project Costing
+            {activeTab === 'Costing' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
+          </button>
+        )}
+        {hasPermission('hr', 'workforce', 'view') && (
+          <button
+            onClick={() => setActiveTab('Ledgers')}
+            className={cn(
+              "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
+              activeTab === 'Ledgers' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            <FileText className="w-4 h-4" />
+            Employee Ledgers
+            {activeTab === 'Ledgers' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
+          </button>
+        )}
+        {hasPermission('accounting', 'accounting-tree', 'view') && (
+          <button
+            onClick={() => setActiveTab('AccountingTree')}
+            className={cn(
+              "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2 text-emerald-600",
+              activeTab === 'AccountingTree' ? "text-emerald-700 bg-emerald-50" : "hover:text-emerald-700 hover:bg-slate-50"
+            )}
+          >
+            <FileText className="w-4 h-4" />
+            AI Accounting Tree
+            {activeTab === 'AccountingTree' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600" />}
+          </button>
+        )}
         <button
           onClick={() => onNavigate && onNavigate('procurement')}
           className={cn(
@@ -1163,7 +1184,7 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
                     </td>
                     <td className="px-6 py-4 text-right rounded-r-xl border-r border-y border-slate-100">
                       <div className="flex items-center justify-end gap-2">
-                        {NEXT_STATUS[inv.status] && (
+                        {NEXT_STATUS[inv.status] && hasPermission('accounting', 'finance', 'approve') && (
                           <button 
                             onClick={() => handleTransition(inv)}
                             disabled={processingId === inv.id}
@@ -1189,14 +1210,16 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
                             </div>
                           </div>
                         )}
-                        <button 
-                          onClick={() => handleDownloadPdf(inv)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-100 rounded bg-white transition-colors"
-                          title="Download PDF Invoice"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        {inv.status === 'Draft' || inv.status === 'Pending Finance' ? (
+                        {hasPermission('accounting', 'finance', 'print') && (
+                          <button 
+                            onClick={() => handleDownloadPdf(inv)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-100 rounded bg-white transition-colors"
+                            title="Download PDF Invoice"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        )}
+                        {(inv.status === 'Draft' || inv.status === 'Pending Finance') && hasPermission('accounting', 'finance', 'edit') ? (
                           <button 
                             onClick={() => handleEditInvoice(inv)}
                             className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-100 rounded bg-white transition-colors"
@@ -1205,13 +1228,15 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
                             <Edit3 className="w-4 h-4" />
                           </button>
                         ) : null}
-                        <button 
-                          onClick={() => handleDeleteInvoice(inv.id, { stopPropagation: () => {} } as React.MouseEvent)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 border border-slate-100 rounded bg-white transition-colors"
-                          title="Delete Invoice"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {hasPermission('accounting', 'finance', 'delete') && (
+                          <button 
+                            onClick={() => handleDeleteInvoice(inv.id, { stopPropagation: () => {} } as React.MouseEvent)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-100 rounded bg-white transition-colors"
+                            title="Delete Invoice"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -1516,13 +1541,15 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Registered Cost Sheets</h3>
                   <p className="text-xs text-slate-500 uppercase tracking-widest font-bold opacity-60">Archived Financial Node Estimations</p>
                 </div>
-                <button 
-                  onClick={() => setIsCreatingCosting(true)}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded text-xs font-bold uppercase tracking-widest hover:bg-black transition-all shadow-lg active:scale-95"
-                >
-                  <Plus className="w-4 h-4" />
-                  New Costing Node
-                </button>
+                {hasPermission('accounting', 'finance', 'create') && (
+                  <button 
+                    onClick={() => setIsCreatingCosting(true)}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded text-xs font-bold uppercase tracking-widest hover:bg-black transition-all shadow-lg active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Costing Node
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1549,30 +1576,38 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
                         <p className="text-lg font-mono font-bold text-slate-900 leading-none">{formatCurrency(sheet.grandTotal)}</p>
                       </div>
                       <div className="flex gap-2 mt-2">
-                         <button 
-                            onClick={() => handlePrintCostSheet(sheet)}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 text-slate-600 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-95 border border-slate-200"
-                            title="Print Detail Report"
-                         >
-                            <Printer className="w-3 h-3" />
-                            Print
-                         </button>
-                         <button 
-                            onClick={() => handleDownloadCostSheetExcel(sheet)}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all active:scale-95 border border-red-100"
-                            title="Export Breakdown"
-                         >
-                            <Download className="w-3 h-3" />
-                            Excel
-                         </button>
+                         {hasPermission('accounting', 'finance', 'print') && (
+                          <button 
+                              onClick={() => handlePrintCostSheet(sheet)}
+                              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 text-slate-600 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-95 border border-slate-200"
+                              title="Print Detail Report"
+                          >
+                              <Printer className="w-3 h-3" />
+                              Print
+                          </button>
+                         )}
+                         {hasPermission('accounting', 'finance', 'export') && (
+                          <button 
+                              onClick={() => handleDownloadCostSheetExcel(sheet)}
+                              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all active:scale-95 border border-red-100"
+                              title="Export Breakdown"
+                          >
+                              <Download className="w-3 h-3" />
+                              Excel
+                          </button>
+                         )}
                       </div>
                       <div className="flex justify-between border-t border-slate-100 pt-3 mt-2">
-                          <button onClick={() => handleEditCostSheet(sheet)} className="text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 flex items-center gap-1">
-                              <Edit3 className="w-3 h-3" /> Edit
-                          </button>
-                          <button onClick={(e) => handleDeleteCostSheet(sheet.id, e)} className="text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 flex items-center gap-1">
-                              <Trash2 className="w-3 h-3" /> Delete
-                          </button>
+                          {hasPermission('accounting', 'finance', 'edit') && (
+                            <button onClick={() => handleEditCostSheet(sheet)} className="text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 flex items-center gap-1">
+                                <Edit3 className="w-3 h-3" /> Edit
+                            </button>
+                          )}
+                          {hasPermission('accounting', 'finance', 'delete') && (
+                            <button onClick={(e) => handleDeleteCostSheet(sheet.id, e)} className="text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 flex items-center gap-1">
+                                <Trash2 className="w-3 h-3" /> Delete
+                            </button>
+                          )}
                       </div>
                     </div>
                   </div>

@@ -76,7 +76,7 @@ interface PlanningProps {
 }
 
 export function Planning({ projects, workers, language, company }: PlanningProps) {
-  const { userData } = useAuth();
+  const { userData, hasPermission } = useAuth();
   const isRtl = language === 'ar';
 
   // Safe helper wrappers to prevent iframe sandbox crash on alert/confirm
@@ -1131,12 +1131,15 @@ export function Planning({ projects, workers, language, company }: PlanningProps
                       </div>
                       <div className="flex items-center gap-1">
                         <Edit2 
-                          onClick={() => { setEditingWbs(wbs); setIsWbsModalOpen(true); }}
+                          onClick={() => { 
+                            if (!hasPermission('projects', 'planning', 'edit')) { safeAlert(t.roleRestricted); return; }
+                            setEditingWbs(wbs); setIsWbsModalOpen(true); 
+                          }}
                           className="w-3 h-3 text-slate-400 hover:text-blue-500 cursor-pointer" 
                         />
                         <Trash2 
                           onClick={() => {
-                            if (!activeProfile.permissions.delete) { safeAlert(t.roleRestricted); return; }
+                            if (!hasPermission('projects', 'planning', 'delete')) { safeAlert(t.roleRestricted); return; }
                             if (safeConfirm(isRtl ? 'حذف هذه المرحلة بالكامل؟' : 'Delete WBS node phase?')) {
                               setWbsNodes(wbsNodes.filter(x => x.id !== wbs.id));
                               addPrimaveraLog('Remove WBS Node', `Deleted Structural breakdown phase ${wbs.code}.`);
@@ -1612,7 +1615,7 @@ export function Planning({ projects, workers, language, company }: PlanningProps
                             <div className="flex items-center justify-center gap-1.5">
                               <button
                                 onClick={() => {
-                                  if (!activeProfile.permissions.update) {
+                                  if (!hasPermission('projects', 'productivity', 'edit')) {
                                     safeAlert(t.roleRestricted);
                                     return;
                                   }
@@ -1627,7 +1630,20 @@ export function Planning({ projects, workers, language, company }: PlanningProps
                               </button>
                               <button
                                 onClick={() => {
-                                  if (!activeProfile.permissions.delete) {
+                                  if (!hasPermission('projects', 'productivity', 'print')) {
+                                    safeAlert(t.roleRestricted);
+                                    return;
+                                  }
+                                  window.print();
+                                }}
+                                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 transition-colors"
+                                title="Print Record"
+                              >
+                                <Printer className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (!hasPermission('projects', 'productivity', 'delete')) {
                                     safeAlert(t.roleRestricted);
                                     return;
                                   }

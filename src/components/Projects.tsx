@@ -58,6 +58,7 @@ import {
 } from 'recharts';
 import { Project, Worker, ProjectResource, ProjectTask, Asset, ClientInfo } from '@/src/types';
 import { useTranslation, Language } from '../lib/translations';
+import { useAuth } from '../contexts/AuthContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { notificationService } from '../lib/notificationService';
 
@@ -157,6 +158,7 @@ export function Projects({
   setDailyOutputs: propsSetDailyOutputs
 }: ProjectsProps) {
   const { t, d } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const [currentTime, setCurrentTime] = React.useState(() => new Date());
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -1464,13 +1466,15 @@ export function Projects({
               </div>
             )}
           </div>
-          <button 
-            onClick={() => { setEditingProject(null); setEditingProductivityMetrics([]); setIsModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-black transition-all active:scale-95"
-          >
-            <Plus className="w-3 h-3" />
-            {t.projects_view.new_project}
-          </button>
+          {hasPermission('projects', 'planning', 'create') && (
+            <button 
+              onClick={() => { setEditingProject(null); setEditingProductivityMetrics([]); setIsModalOpen(true); }}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-black transition-all active:scale-95"
+            >
+              <Plus className="w-3 h-3" />
+              {t.projects_view.new_project}
+            </button>
+          )}
         </div>
       </div>
 
@@ -1579,20 +1583,24 @@ export function Projects({
                       >
                         <LayoutDashboard className="w-3.5 h-3.5" />
                       </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setEditingProject(project); setEditingProductivityMetrics(project.productivityMetrics || []); setIsModalOpen(true); }}
-                        className="p-1 px-1.5 border border-slate-200 rounded text-slate-500 hover:text-red-650 bg-slate-50 hover:bg-slate-100 transition-all font-bold text-[9px] uppercase tracking-wider flex items-center gap-1"
-                        title="Edit Project"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={(e) => handleDeleteProjectLocal(project.id, e)}
-                        className="p-1 px-1.5 border border-slate-200 rounded text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 transition-all font-bold text-[9px] uppercase tracking-wider flex items-center gap-1"
-                        title="Delete Project"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {hasPermission('projects', 'planning', 'edit') && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setEditingProject(project); setEditingProductivityMetrics(project.productivityMetrics || []); setIsModalOpen(true); }}
+                          className="p-1 px-1.5 border border-slate-200 rounded text-slate-500 hover:text-red-650 bg-slate-50 hover:bg-slate-100 transition-all font-bold text-[9px] uppercase tracking-wider flex items-center gap-1"
+                          title="Edit Project"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {hasPermission('projects', 'planning', 'delete') && (
+                        <button 
+                          onClick={(e) => handleDeleteProjectLocal(project.id, e)}
+                          className="p-1 px-1.5 border border-slate-200 rounded text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 transition-all font-bold text-[9px] uppercase tracking-wider flex items-center gap-1"
+                          title="Delete Project"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   

@@ -20,6 +20,7 @@ import {
 import { cn, createAuditLog } from '@/src/lib/utils';
 import { Worker, Project } from '@/src/types';
 import { useTranslation, Language } from '../lib/translations';
+import { useAuth } from '../contexts/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { notificationService } from '../lib/notificationService';
@@ -45,6 +46,7 @@ interface WorkforceProps {
 
 export function Workforce({ projects, workers, setWorkers, language, company }: WorkforceProps) {
   const { t, d } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingWorker, setEditingWorker] = React.useState<Worker | null>(null);
@@ -370,13 +372,15 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
             <Printer className="w-4 h-4" />
             {selectedWorkerIds.length > 0 ? `Selected (${selectedWorkerIds.length})` : 'All Profiles'}
           </button>
-          <button 
-            onClick={() => { setEditingWorker(null); setUploadedFiles([]); setIsModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            {t.common.add}
-          </button>
+          {hasPermission('hr', 'workforce', 'create') && (
+            <button 
+              onClick={() => { setEditingWorker(null); setUploadedFiles([]); setIsModalOpen(true); }}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              {t.common.add}
+            </button>
+          )}
         </div>
       </div>
 
@@ -425,28 +429,34 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
                   }}
                   className="w-4 h-4 mr-2 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer"
                 />
-                <button 
-                  onClick={() => {
-                    setSelectedWorkerIds([worker.id]);
-                    setTimeout(handlePrint, 50); // call the generic print handler for just this worker
-                  }}
-                  className="p-1.5 text-slate-300 hover:text-emerald-600 transition-colors"
-                  title="Print PDF Profile"
-                >
-                  <Printer className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => { setEditingWorker(worker); setUploadedFiles(worker.attachmentUrls || []); setIsModalOpen(true); }}
-                  className="p-1.5 text-slate-300 hover:text-red-600 transition-colors"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => handleDelete(worker.id)}
-                  className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {hasPermission('hr', 'workforce', 'print') && (
+                  <button 
+                    onClick={() => {
+                      setSelectedWorkerIds([worker.id]);
+                      setTimeout(handlePrint, 50); // call the generic print handler for just this worker
+                    }}
+                    className="p-1.5 text-slate-300 hover:text-emerald-600 transition-colors"
+                    title="Print PDF Profile"
+                  >
+                    <Printer className="w-4 h-4" />
+                  </button>
+                )}
+                {hasPermission('hr', 'workforce', 'edit') && (
+                  <button 
+                    onClick={() => { setEditingWorker(worker); setUploadedFiles(worker.attachmentUrls || []); setIsModalOpen(true); }}
+                    className="p-1.5 text-slate-300 hover:text-red-600 transition-colors"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                )}
+                {hasPermission('hr', 'workforce', 'delete') && (
+                  <button 
+                    onClick={() => handleDelete(worker.id)}
+                    className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
             

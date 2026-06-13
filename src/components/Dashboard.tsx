@@ -38,6 +38,7 @@ const stats = [
 
 import { Project, Invoice, Worker } from '@/src/types';
 import { useTranslation, Language } from '../lib/translations';
+import { useAuth } from '../contexts/AuthContext';
 
 interface DashboardProps {
   projects: Project[];
@@ -50,6 +51,7 @@ interface DashboardProps {
 
 export function Dashboard({ projects, invoices, workers, language, onViewChange }: DashboardProps) {
   const { t, d } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const activeProjectsCount = projects.filter(p => p.status === 'Active').length;
   const highRiskCount = projects.filter(p => p.riskLevel === 'High').length;
   const openInvoicesValue = invoices
@@ -91,14 +93,16 @@ export function Dashboard({ projects, invoices, workers, language, onViewChange 
             <p className="text-sm font-bold text-slate-800 mt-1">Access essential modules instantly</p>
           </div>
           <div className="flex gap-3">
-             <button
-               onClick={() => {
-                 if (onViewChange) onViewChange('payroll');
-               }}
-               className="px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-indigo-100 transition-colors uppercase tracking-wider"
-             >
-               <Users className="w-4 h-4" /> Go to Payroll Manager
-             </button>
+             {hasPermission('finance', 'payroll_cycles', 'view') && (
+               <button
+                 onClick={() => {
+                   if (onViewChange) onViewChange('payroll');
+                 }}
+                 className="px-4 py-2.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-indigo-100 transition-colors uppercase tracking-wider"
+               >
+                 <Users className="w-4 h-4" /> Go to Payroll Manager
+               </button>
+             )}
           </div>
         </div>
       </div>
