@@ -27,6 +27,8 @@ import { useTranslation, Language } from '../lib/translations';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useAuth } from '../contexts/AuthContext';
+import { ShieldAlert } from 'lucide-react';
 
 // We add the types and initial state for catering
 interface FoodInventory {
@@ -58,7 +60,19 @@ interface AccommodationProps {
 
 export function Accommodation({ language, company }: AccommodationProps) {
   const { t, d } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const [accommodations, setAccommodations] = useLocalStorage<AccommodationType[]>('ares_accommodations', initialAccommodations);
+
+  if (!hasPermission('internal_admin', 'accommodation', 'view')) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-50 rounded-3xl border border-slate-200 animate-in fade-in duration-500">
+        <ShieldAlert className="w-16 h-16 text-slate-200 mb-4" />
+        <h2 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 italic mb-6">You do not have the required permissions to view accommodation records.</p>
+      </div>
+    );
+  }
+
   const [foodInventory, setFoodInventory] = useLocalStorage<FoodInventory[]>('ares_foodInventory', initialFoodInventory);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -192,26 +206,35 @@ export function Accommodation({ language, company }: AccommodationProps) {
         </div>
         
         <div className="flex gap-3 print:hidden">
-          <button 
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all"
-          >
-            <Printer className="w-3 h-3" />
-            Print Status
-          </button>
-          {activeTab === 'housing' ? (
-             <button 
-              onClick={() => { setEditingAccommodation(null); setIsModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95"
+          {hasPermission('internal_admin', 'accommodation', 'export') && (
+            <button 
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50 transition-all"
             >
-              <Plus className="w-3 h-3" />
-              Register Unit
+              <Printer className="w-3 h-3" />
+              Print Status
             </button>
+          )}
+          {activeTab === 'housing' ? (
+             hasPermission('internal_admin', 'accommodation', 'create') && (
+               <button 
+                onClick={() => { setEditingAccommodation(null); setIsModalOpen(true); }}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95"
+              >
+                <Plus className="w-3 h-3" />
+                Register Unit
+              </button>
+             )
           ) : (
-            <button className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition">
-              <Plus className="w-3 h-3" />
-              Add Inventory
-            </button>
+            hasPermission('internal_admin', 'accommodation', 'manage') && (
+              <button 
+                onClick={() => { setEditingFood(null); setIsFoodModalOpen(true); }}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition"
+              >
+                <Plus className="w-3 h-3" />
+                Add Inventory
+              </button>
+            )
           )}
         </div>
       </div>
@@ -239,18 +262,22 @@ export function Accommodation({ language, company }: AccommodationProps) {
               <div key={acc.id} className="glass-panel bg-white border border-slate-100 p-6 hover:border-red-200 transition-all group relative overflow-auto resize-y">
                 <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="flex gap-1">
-                    <button 
-                      onClick={() => { setEditingAccommodation(acc); setIsModalOpen(true); }}
-                      className="p-1.5 bg-white border border-slate-100 rounded text-slate-400 hover:text-red-600 transition-colors"
-                    >
-                      <Edit3 className="w-3 h-3" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(acc.id)}
-                      className="p-1.5 bg-white border border-slate-100 rounded text-slate-400 hover:text-rose-600 transition-colors"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                    {hasPermission('internal_admin', 'accommodation', 'edit') && (
+                      <button 
+                        onClick={() => { setEditingAccommodation(acc); setIsModalOpen(true); }}
+                        className="p-1.5 bg-white border border-slate-100 rounded text-slate-400 hover:text-red-600 transition-colors"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </button>
+                    )}
+                    {hasPermission('internal_admin', 'accommodation', 'delete') && (
+                      <button 
+                        onClick={() => handleDelete(acc.id)}
+                        className="p-1.5 bg-white border border-slate-100 rounded text-slate-400 hover:text-rose-600 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -312,12 +339,14 @@ export function Accommodation({ language, company }: AccommodationProps) {
             <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm uppercase tracking-tight">
               <Coffee className="w-4 h-4" /> Food & Catering Resources
             </h3>
-            <button 
-              onClick={() => { setEditingFood(null); setIsFoodModalOpen(true); }}
-              className="px-4 py-2 bg-slate-900 text-white rounded-md text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors flex items-center gap-2"
-            >
-              <Plus className="w-3 h-3" /> Add Item
-            </button>
+            {hasPermission('internal_admin', 'accommodation', 'manage') && (
+              <button 
+                onClick={() => { setEditingFood(null); setIsFoodModalOpen(true); }}
+                className="px-4 py-2 bg-slate-900 text-white rounded-md text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-3 h-3" /> Add Item
+              </button>
+            )}
           </div>
           <div className="overflow-x-auto w-full min-w-full"><div className="min-w-max">
           <table className="w-full text-left border-collapse">
@@ -345,8 +374,12 @@ export function Accommodation({ language, company }: AccommodationProps) {
                   <td className="px-6 py-4 text-sm text-slate-600">{food.unit}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                       <button onClick={() => { setEditingFood(food); setIsFoodModalOpen(true); }} className="p-1 text-slate-300 hover:text-slate-900 transition-colors"><Edit3 className="w-4 h-4" /></button>
-                       <button onClick={() => handleDeleteFood(food.id)} className="p-1 text-slate-300 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                       {hasPermission('internal_admin', 'accommodation', 'manage') && (
+                         <>
+                           <button onClick={() => { setEditingFood(food); setIsFoodModalOpen(true); }} className="p-1 text-slate-300 hover:text-slate-900 transition-colors"><Edit3 className="w-4 h-4" /></button>
+                           <button onClick={() => handleDeleteFood(food.id)} className="p-1 text-slate-300 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                         </>
+                       )}
                     </div>
                   </td>
                 </tr>

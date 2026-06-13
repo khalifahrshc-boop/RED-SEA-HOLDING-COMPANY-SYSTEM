@@ -32,7 +32,8 @@ import {
   ArrowLeft,
   Coffee,
   Clock,
-  Building2
+  Building2,
+  Lock
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, getCleanLogoBase64 } from '@/src/lib/utils';
 import * as XLSX from 'xlsx';
@@ -159,6 +160,21 @@ export function Projects({
 }: ProjectsProps) {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
+
+  if (!hasPermission('projects', 'projects', 'view')) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center">
+        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4 text-red-600">
+          <Lock className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">Access Restricted</h2>
+        <p className="text-slate-500 max-w-md mx-auto">
+          You do not have the required permissions to view the Project Management module. Please contact your system administrator for access.
+        </p>
+      </div>
+    );
+  }
+
   const [currentTime, setCurrentTime] = React.useState(() => new Date());
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -1441,32 +1457,38 @@ export function Projects({
             </button>
             {selectedProject && (
               <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-                <button 
-                  onClick={() => setIsFullReportOpen(true)}
-                  className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-red-600" />
-                  Open Comprehensive Matrix
-                </button>
+                {hasPermission('projects', 'projects', 'view') && (
+                  <button 
+                    onClick={() => setIsFullReportOpen(true)}
+                    className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-red-600" />
+                    Open Comprehensive Matrix
+                  </button>
+                )}
                 <div className="h-px bg-slate-100 my-1 mx-2"></div>
-                <button 
-                  onClick={handlePrint}
-                  className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
-                >
-                  <Printer className="w-4 h-4" />
-                  Global Ledger PDF
-                </button>
-                <button 
-                  onClick={exportToExcel}
-                  className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  Raw Data Export (Excel)
-                </button>
+                {hasPermission('projects', 'projects', 'print') && (
+                  <button 
+                    onClick={handlePrint}
+                    className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Global Ledger PDF
+                  </button>
+                )}
+                {hasPermission('projects', 'projects', 'export') && (
+                  <button 
+                    onClick={exportToExcel}
+                    className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    Raw Data Export (Excel)
+                  </button>
+                )}
               </div>
             )}
           </div>
-          {hasPermission('projects', 'planning', 'create') && (
+          {hasPermission('projects', 'projects', 'create') && (
             <button 
               onClick={() => { setEditingProject(null); setEditingProductivityMetrics([]); setIsModalOpen(true); }}
               className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-black transition-all active:scale-95"

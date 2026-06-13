@@ -23,6 +23,8 @@ import * as XLSX from 'xlsx';
 
 import { notificationService } from '../lib/notificationService';
 
+import { useAuth } from '../contexts/AuthContext';
+
 interface DailyExpendituresProps {
   projects: Project[];
   expenditures: DailyExpenditure[];
@@ -42,6 +44,18 @@ const APPROVAL_WORKFLOW = [
 
 export function DailyExpenditures({ projects, expenditures, setExpenditures, onDeleteExpenditure, language, onUpdateProject }: DailyExpendituresProps) {
   const { t } = useTranslation(language);
+  const { hasPermission } = useAuth();
+
+  if (!hasPermission('finance_admin', 'daily-expenditures', 'view')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-xl border border-slate-200 p-8 text-center ring-1 ring-slate-100">
+        <Receipt className="w-12 h-12 text-slate-300 mb-4" />
+        <h2 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 max-w-sm italic">You do not have the required permissions to access Daily Expenditures. Contact Finance Lead.</p>
+      </div>
+    );
+  }
+
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingExpenditure, setEditingExpenditure] = React.useState<DailyExpenditure | null>(null);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string>(projects[0]?.id || '');
@@ -173,41 +187,47 @@ export function DailyExpenditures({ projects, expenditures, setExpenditures, onD
           <p className="text-slate-500 text-sm italic font-medium">Accounting-led fiscal tracking with multi-stage verification.</p>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={() => {
-              setExpenditures(prev => prev.map(exp => {
-                if (exp.status !== 'Approved' && exp.status !== 'Rejected') {
-                  const project = projects.find(p => p.id === exp.projectId);
-                  if (project) {
-                    onUpdateProject({
-                      ...project,
-                      spent: project.spent + exp.amount
-                    });
+          {hasPermission('finance_admin', 'daily-expenditures', 'edit') && (
+            <button 
+              onClick={() => {
+                setExpenditures(prev => prev.map(exp => {
+                  if (exp.status !== 'Approved' && exp.status !== 'Rejected') {
+                    const project = projects.find(p => p.id === exp.projectId);
+                    if (project) {
+                      onUpdateProject({
+                        ...project,
+                        spent: project.spent + exp.amount
+                      });
+                    }
+                    return { ...exp, status: 'Approved' };
                   }
-                  return { ...exp, status: 'Approved' };
-                }
-                return exp;
-              }));
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 border border-emerald-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-emerald-700 transition-all"
-          >
-            <CheckCircle2 className="w-3 h-3" />
-            Bulk Authorize Pending
-          </button>
-          <button 
-            onClick={exportLedger}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all"
-          >
-            <Download className="w-3 h-3" />
-            Export Data
-          </button>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-black transition-all active:scale-95"
-          >
-            <Plus className="w-3 h-3" />
-            Record Expenditure
-          </button>
+                  return exp;
+                }));
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 border border-emerald-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-emerald-700 transition-all"
+            >
+              <CheckCircle2 className="w-3 h-3" />
+              Bulk Authorize Pending
+            </button>
+          )}
+          {hasPermission('finance_admin', 'daily-expenditures', 'export') && (
+            <button 
+              onClick={exportLedger}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all"
+            >
+              <Download className="w-3 h-3" />
+              Export Data
+            </button>
+          )}
+          {hasPermission('finance_admin', 'daily-expenditures', 'create') && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-black transition-all active:scale-95"
+            >
+              <Plus className="w-3 h-3" />
+              Record Expenditure
+            </button>
+          )}
         </div>
       </div>
 
@@ -247,28 +267,32 @@ export function DailyExpenditures({ projects, expenditures, setExpenditures, onD
                           {(exp.status || '').replace('Pending ', '')}
                         </span>
                         <div className="flex gap-1">
-                          <button 
-                            onClick={() => {
-                              setEditingExpenditure(exp);
-                              setSelectedProjectId(exp.projectId);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors border border-slate-200 rounded"
-                            title="Edit Expenditure"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              if (confirm('Verify expenditure deletion?')) {
-                                onDeleteExpenditure(exp.id);
-                              }
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors border border-slate-200 rounded"
-                            title="Delete Expenditure"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                          {hasPermission('finance_admin', 'daily-expenditures', 'edit') && (
+                            <button 
+                              onClick={() => {
+                                setEditingExpenditure(exp);
+                                setSelectedProjectId(exp.projectId);
+                                setIsModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors border border-slate-200 rounded"
+                              title="Edit Expenditure"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                          )}
+                          {hasPermission('finance_admin', 'daily-expenditures', 'delete') && (
+                            <button 
+                              onClick={() => {
+                                if (confirm('Verify expenditure deletion?')) {
+                                  onDeleteExpenditure(exp.id);
+                                }
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors border border-slate-200 rounded"
+                              title="Delete Expenditure"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -318,20 +342,24 @@ export function DailyExpenditures({ projects, expenditures, setExpenditures, onD
                         </div>
                         
                         <div className="flex flex-col gap-2">
-                          <button 
-                            onClick={() => handleApprove(exp.id)}
-                            className="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95"
-                          >
-                            <ShieldCheck className="w-4 h-4" />
-                            Finalize Tier
-                          </button>
-                          <button 
-                            onClick={() => handleReject(exp.id)}
-                            className="w-full py-2.5 border border-slate-200 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-rose-600 hover:border-rose-200 transition-all flex items-center justify-center gap-2 active:scale-95"
-                          >
-                            <Ban className="w-3 h-3" />
-                            Reject Data
-                          </button>
+                          {hasPermission('finance_admin', 'daily-expenditures', 'edit') && (
+                            <>
+                              <button 
+                                onClick={() => handleApprove(exp.id)}
+                                className="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 active:scale-95"
+                              >
+                                <ShieldCheck className="w-4 h-4" />
+                                Finalize Tier
+                              </button>
+                              <button 
+                                onClick={() => handleReject(exp.id)}
+                                className="w-full py-2.5 border border-slate-200 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-rose-600 hover:border-rose-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+                              >
+                                <Ban className="w-3 h-3" />
+                                Reject Data
+                              </button>
+                            </>
+                          )}
                         </div>
                       </>
                     ) : (

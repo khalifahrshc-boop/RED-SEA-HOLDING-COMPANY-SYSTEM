@@ -92,6 +92,17 @@ interface ProcurementProps {
 export function Procurement({ projects, language, onUpdateProject, company }: ProcurementProps) {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
+
+  if (!hasPermission('external_admin', 'procurement', 'view')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-xl border border-slate-200 p-8 text-center ring-1 ring-slate-100">
+        <Package className="w-12 h-12 text-slate-300 mb-4" />
+        <h2 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 max-w-sm italic">You do not have the required permissions to access the Procurement Matrix. Contact your department lead for clearance.</p>
+      </div>
+    );
+  }
+
   const [activeTab, setActiveTab] = React.useState<'quotes' | 'pos'>('quotes');
   const [quotes, setQuotes] = useLocalStorage<PriceQuote[]>('ares_quotes', dummyQuotes);
   const [pos, setPos] = useLocalStorage<PurchaseOrder[]>('ares_pos', dummyPOs);

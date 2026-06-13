@@ -44,6 +44,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firebase';
+import { useAuth } from '../contexts/AuthContext';
+import { ShieldAlert } from 'lucide-react';
 
 interface ComprehensiveAttendanceReportProps {
   language: 'en' | 'ar';
@@ -53,7 +55,22 @@ interface ComprehensiveAttendanceReportProps {
 
 export function ComprehensiveAttendanceReport({ language, company, onClose }: ComprehensiveAttendanceReportProps) {
   const isRtl = language === 'ar';
+  const { hasPermission } = useAuth();
   const [employees, setEmployees] = useState<EmployeeAttendanceRec[]>([]);
+
+  if (!hasPermission('hr', 'attendance', 'view')) {
+    return (
+      <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300">
+        <div className="bg-white rounded-3xl p-12 max-w-md shadow-2xl">
+          <ShieldAlert className="w-20 h-20 text-slate-200 mx-auto mb-6" />
+          <h2 className="text-2xl font-black text-slate-900 mb-4 uppercase tracking-tight">Access Restricted</h2>
+          <p className="text-slate-500 italic mb-8">You do not have the required permissions to access the Comprehensive Attendance Matrix.</p>
+          <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all shadow-xl">Back to Dashboard</button>
+        </div>
+      </div>
+    );
+  }
+
   const [loading, setLoading] = useState(true);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -427,12 +444,14 @@ export function ComprehensiveAttendanceReport({ language, company, onClose }: Co
           >
             <Download className="w-4 h-4 text-red-600" /> Export Selected ({selectedForExport.length})
           </button>
-          <button 
-            onClick={handleAddEmployee}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition shadow-lg shadow-red-200 ml-2"
-          >
-            <UserPlus className="w-4 h-4" /> Add Employee
-          </button>
+          {hasPermission('hr', 'attendance', 'create') && (
+            <button 
+              onClick={handleAddEmployee}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition shadow-lg shadow-red-200 ml-2"
+            >
+              <UserPlus className="w-4 h-4" /> Add Employee
+            </button>
+          )}
         </div>
       </header>
 
@@ -517,12 +536,14 @@ export function ComprehensiveAttendanceReport({ language, company, onClose }: Co
                       <p className="text-[10px] text-slate-400 font-mono tracking-tighter uppercase truncate">{emp.badgeNumber || 'No Badge'}</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); handleDeleteEmployee(emp.id); }}
-                    className="p-1.5 text-slate-300 hover:text-red-500 transition-all focus:opacity-100"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {hasPermission('hr', 'attendance', 'delete') && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDeleteEmployee(emp.id); }}
+                      className="p-1.5 text-slate-300 hover:text-red-500 transition-all focus:opacity-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -562,73 +583,100 @@ export function ComprehensiveAttendanceReport({ language, company, onClose }: Co
                           {activeEmployee.employeeType}
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 mt-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">ID Number</label>
-                          <input 
-                            type="text" 
-                            value={activeEmployee.idNumber}
-                            onChange={(e) => handleUpdateEmployeeField('idNumber', e.target.value)}
-                            placeholder="National ID"
-                            className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 focus:ring-0"
-                          />
+                      {hasPermission('hr', 'attendance', 'edit') ? (
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 mt-4">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">ID Number</label>
+                            <input 
+                              type="text" 
+                              value={activeEmployee.idNumber}
+                              onChange={(e) => handleUpdateEmployeeField('idNumber', e.target.value)}
+                              placeholder="National ID"
+                              className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 focus:ring-0"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Badge #</label>
+                            <input 
+                              type="text" 
+                              value={activeEmployee.badgeNumber}
+                              onChange={(e) => handleUpdateEmployeeField('badgeNumber', e.target.value)}
+                              placeholder="0000"
+                              className="bg-transparent border-none p-0 text-sm font-bold font-mono text-red-600 focus:ring-0"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Job Title</label>
+                            <input 
+                              type="text" 
+                              value={activeEmployee.jobTitle}
+                              onChange={(e) => handleUpdateEmployeeField('jobTitle', e.target.value)}
+                              className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 focus:ring-0"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Category</label>
+                            <select 
+                              value={activeEmployee.employeeType}
+                              onChange={(e) => handleUpdateEmployeeField('employeeType', e.target.value)}
+                              className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 focus:ring-0 appearance-none cursor-pointer"
+                            >
+                              <option value="Company">Company Staff</option>
+                              <option value="Rental">Rental Provider</option>
+                            </select>
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Badge #</label>
-                          <input 
-                            type="text" 
-                            value={activeEmployee.badgeNumber}
-                            onChange={(e) => handleUpdateEmployeeField('badgeNumber', e.target.value)}
-                            placeholder="0000"
-                            className="bg-transparent border-none p-0 text-sm font-bold font-mono text-red-600 focus:ring-0"
-                          />
+                      ) : (
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 mt-4 text-sm font-bold text-slate-700">
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase block">ID Number</span>
+                            {activeEmployee.idNumber || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase block">Badge #</span>
+                            {activeEmployee.badgeNumber || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase block">Job Title</span>
+                            {activeEmployee.jobTitle || 'N/A'}
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase block">Category</span>
+                            {activeEmployee.employeeType}
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Job Title</label>
-                          <input 
-                            type="text" 
-                            value={activeEmployee.jobTitle}
-                            onChange={(e) => handleUpdateEmployeeField('jobTitle', e.target.value)}
-                            className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 focus:ring-0"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Category</label>
-                          <select 
-                            value={activeEmployee.employeeType}
-                            onChange={(e) => handleUpdateEmployeeField('employeeType', e.target.value)}
-                            className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 focus:ring-0 appearance-none cursor-pointer"
-                          >
-                            <option value="Company">Company Staff</option>
-                            <option value="Rental">Rental Provider</option>
-                          </select>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleDownloadPDF(false)}
-                      disabled={isGeneratingPDF}
-                      className="p-3 text-slate-400 hover:text-red-600 transition-colors"
-                      title="Export single PDF"
-                    >
-                      <Download className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={handlePrint}
-                      className="p-3 text-slate-400 hover:text-slate-600 transition-colors"
-                      title="Print document"
-                    >
-                      <Printer className="w-5 h-5" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteEmployee(activeEmployee.id)}
-                      className="p-3 text-slate-300 hover:text-red-600 transition-colors"
-                      title="Delete this record"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    {hasPermission('hr', 'attendance', 'export') && (
+                      <button 
+                        onClick={() => handleDownloadPDF(false)}
+                        disabled={isGeneratingPDF}
+                        className="p-3 text-slate-400 hover:text-red-600 transition-colors"
+                        title="Export single PDF"
+                      >
+                        <Download className="w-5 h-5" />
+                      </button>
+                    )}
+                    {hasPermission('hr', 'attendance', 'print') && (
+                      <button 
+                        onClick={handlePrint}
+                        className="p-3 text-slate-400 hover:text-slate-600 transition-colors"
+                        title="Print document"
+                      >
+                        <Printer className="w-5 h-5" />
+                      </button>
+                    )}
+                    {hasPermission('hr', 'attendance', 'delete') && (
+                      <button 
+                        onClick={() => handleDeleteEmployee(activeEmployee.id)}
+                        className="p-3 text-slate-300 hover:text-red-600 transition-colors"
+                        title="Delete this record"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 

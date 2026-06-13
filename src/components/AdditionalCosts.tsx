@@ -20,6 +20,8 @@ import { Project, AdditionalCost } from '@/src/types';
 import { useTranslation, Language } from '../lib/translations';
 import * as XLSX from 'xlsx';
 import { notificationService } from '../lib/notificationService';
+import { useAuth } from '../contexts/AuthContext';
+import { ShieldAlert } from 'lucide-react';
 
 interface AdditionalCostsProps {
   projects: Project[];
@@ -40,9 +42,20 @@ const APPROVAL_WORKFLOW = [
 
 export function AdditionalCosts({ projects, additionalCosts, setAdditionalCosts, onDeleteCost, language, onUpdateProject, company }: AdditionalCostsProps) {
   const { t } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingCost, setEditingCost] = React.useState<AdditionalCost | null>(null);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string>(projects[0]?.id || '');
+
+  if (!hasPermission('finance_admin', 'additional-costs', 'view')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-xl border border-slate-200 p-8 text-center ring-1 ring-slate-100">
+        <ShieldAlert className="w-12 h-12 text-slate-300 mb-4" />
+        <h2 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 max-w-sm italic">You do not have the required permissions to access Additional Costs. Contact Administration.</p>
+      </div>
+    );
+  }
   
   const handleSaveCost = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -141,8 +154,12 @@ export function AdditionalCosts({ projects, additionalCosts, setAdditionalCosts,
           <p className="text-sm text-slate-500">Budget adjustments and approval flow.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={exportLedger} className="px-4 py-2 border rounded-md text-xs font-bold uppercase tracking-widest">Export</button>
-          <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest hover:bg-black transition-all">Add Cost</button>
+          {hasPermission('finance_admin', 'additional-costs', 'export') && (
+            <button onClick={exportLedger} className="px-4 py-2 border rounded-md text-xs font-bold uppercase tracking-widest">Export</button>
+          )}
+          {hasPermission('finance_admin', 'additional-costs', 'create') && (
+            <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest hover:bg-black transition-all">Add Cost</button>
+          )}
         </div>
       </div>
 
@@ -174,8 +191,12 @@ export function AdditionalCosts({ projects, additionalCosts, setAdditionalCosts,
                         <p className="font-bold">{formatCurrency(cost.totalAmount)}</p>
                       </div>
                       <div className="flex gap-1 justify-end items-center">
-                        <button onClick={() => { setEditingCost(cost); setIsModalOpen(true); }} className="p-1 border rounded hover:bg-slate-50"><Edit3 className="w-3 h-3" /></button>
-                        <button onClick={() => onDeleteCost(cost.id)} className="p-1 border rounded hover:bg-rose-50 text-rose-500"><Trash2 className="w-3 h-3" /></button>
+                        {hasPermission('finance_admin', 'additional-costs', 'edit') && (
+                          <button onClick={() => { setEditingCost(cost); setIsModalOpen(true); }} className="p-1 border rounded hover:bg-slate-50"><Edit3 className="w-3 h-3" /></button>
+                        )}
+                        {hasPermission('finance_admin', 'additional-costs', 'delete') && (
+                          <button onClick={() => onDeleteCost(cost.id)} className="p-1 border rounded hover:bg-rose-50 text-rose-500"><Trash2 className="w-3 h-3" /></button>
+                        )}
                       </div>
                    </div>
                 </div>
@@ -183,8 +204,12 @@ export function AdditionalCosts({ projects, additionalCosts, setAdditionalCosts,
                 <div className="p-6 bg-slate-50 md:w-64 flex flex-col justify-center gap-3">
                   {cost.status !== 'Approved' && cost.status !== 'Rejected' ? (
                     <>
-                      <button onClick={() => handleApprove(cost.id)} className="w-full py-2 bg-slate-900 text-white rounded text-xs font-bold uppercase">Approve ({APPROVAL_WORKFLOW[currentIndex]?.label})</button>
-                      <button onClick={() => handleReject(cost.id)} className="w-full py-2 border rounded text-xs font-bold uppercase">Reject</button>
+                      {hasPermission('finance_admin', 'additional-costs', 'edit') && (
+                        <>
+                          <button onClick={() => handleApprove(cost.id)} className="w-full py-2 bg-slate-900 text-white rounded text-xs font-bold uppercase">Approve ({APPROVAL_WORKFLOW[currentIndex]?.label})</button>
+                          <button onClick={() => handleReject(cost.id)} className="w-full py-2 border rounded text-xs font-bold uppercase">Reject</button>
+                        </>
+                      )}
                     </>
                   ) : (
                     <p className="text-center text-xs font-bold uppercase">{cost.status}</p>

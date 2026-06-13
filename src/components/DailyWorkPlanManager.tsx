@@ -39,6 +39,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { handleFirestoreError, OperationType } from '../lib/firebase';
 
+import { useAuth } from '../contexts/AuthContext';
+
 interface DailyWorkPlanManagerProps {
   onClose: () => void;
   company?: CompanyData;
@@ -46,6 +48,26 @@ interface DailyWorkPlanManagerProps {
 }
 
 export function DailyWorkPlanManager({ onClose, company, projects }: DailyWorkPlanManagerProps) {
+  const { hasPermission } = useAuth();
+
+  if (!hasPermission('internal_admin', 'daily-planning', 'view')) {
+    return (
+      <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 text-white">
+         <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 text-center space-y-4 shadow-2xl">
+            <LayoutGrid className="w-12 h-12 text-slate-700 mx-auto" />
+            <h2 className="text-xl font-bold uppercase tracking-tight">Access Restricted</h2>
+            <p className="text-slate-400 max-w-xs text-sm">You do not have the required permissions to access Daily Work Plans. Contact Operations Lead.</p>
+            <button 
+              onClick={onClose}
+              className="px-6 py-2 bg-white text-slate-900 rounded font-bold text-xs uppercase tracking-widest hover:bg-slate-200 transition-colors"
+            >
+              Close Portal
+            </button>
+         </div>
+      </div>
+    );
+  }
+
   const [plans, setPlans] = React.useState<DailyWorkPlan[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -1100,7 +1122,7 @@ export function DailyWorkPlanManager({ onClose, company, projects }: DailyWorkPl
                         className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all text-slate-900"
                       />
                     </div>
-                    {selectedPlanIds.length > 0 && (
+                    {selectedPlanIds.length > 0 && hasPermission('internal_admin', 'daily-planning', 'print') && (
                        <button 
                         onClick={() => {
                           const toPrint = plans.filter(p => selectedPlanIds.includes(p.id));
@@ -1126,13 +1148,15 @@ export function DailyWorkPlanManager({ onClose, company, projects }: DailyWorkPl
                     >
                       {selectedPlanIds.length === filteredPlans.length ? 'Deselect All' : 'Select All'}
                     </button>
-                    <button 
-                      onClick={handleAddNew}
-                      className="flex items-center gap-2 px-8 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg"
-                    >
-                      <Plus className="w-4 h-4" />
-                      New execution Plan
-                    </button>
+                    {hasPermission('internal_admin', 'daily-planning', 'create') && (
+                      <button 
+                        onClick={handleAddNew}
+                        className="flex items-center gap-2 px-8 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg"
+                      >
+                        <Plus className="w-4 h-4" />
+                        New execution Plan
+                      </button>
+                    )}
                   </div>
                </div>
 
@@ -1188,25 +1212,31 @@ export function DailyWorkPlanManager({ onClose, company, projects }: DailyWorkPl
                                      {plan.shift}
                                    </span>
                                  </div>
-                                  <div className="flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity mr-6">
-                                    <button 
-                                      onClick={(e) => { e.stopPropagation(); handleEdit(plan); }} 
-                                      className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-900 shadow-sm transition-all"
-                                    >
-                                      <Edit2 className="w-3 h-3" />
-                                    </button>
-                                    <button 
-                                      onClick={(e) => { e.stopPropagation(); handleExportPDF(plan); }} 
-                                      className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-900 shadow-sm transition-all"
-                                    >
-                                      <Printer className="w-3 h-3" />
-                                    </button>
-                                    <button 
-                                      onClick={(e) => { e.stopPropagation(); handleDelete(plan.id); }} 
-                                      className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-600 shadow-sm transition-all"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
+                                   <div className="flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity mr-6 text-slate-900">
+                                    {hasPermission('internal_admin', 'daily-planning', 'edit') && (
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); handleEdit(plan); }} 
+                                        className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-900 shadow-sm transition-all"
+                                      >
+                                        <Edit2 className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                    {hasPermission('internal_admin', 'daily-planning', 'print') && (
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); handleExportPDF(plan); }} 
+                                        className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-900 shadow-sm transition-all"
+                                      >
+                                        <Printer className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                    {hasPermission('internal_admin', 'daily-planning', 'delete') && (
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(plan.id); }} 
+                                        className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-600 shadow-sm transition-all"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    )}
                                   </div>
                                </div>
                                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-tight truncate pr-4">{plan.projectName}</h4>
@@ -1255,19 +1285,21 @@ export function DailyWorkPlanManager({ onClose, company, projects }: DailyWorkPl
                                </div>
                             </div>
 
-                            <div className="px-5 py-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
+                             <div className="px-5 py-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
                                <div className="flex items-center gap-2">
                                  <div className="w-6 h-6 rounded bg-slate-200 border border-slate-300 flex items-center justify-center">
                                    <User className="w-3 h-3 text-slate-500" />
                                  </div>
                                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">{plan.projectManager}</span>
                                </div>
-                               <button 
-                                onClick={(e) => { e.stopPropagation(); handleEdit(plan); }}
-                                className="text-[10px] font-bold text-slate-900 border-b border-slate-900 hover:text-red-600 hover:border-red-600 transition-all uppercase tracking-widest"
-                               >
-                                 Manage Plan
-                               </button>
+                               {hasPermission('internal_admin', 'daily-planning', 'edit') && (
+                                 <button 
+                                  onClick={(e) => { e.stopPropagation(); handleEdit(plan); }}
+                                  className="text-[10px] font-bold text-slate-900 border-b border-slate-900 hover:text-red-600 hover:border-red-600 transition-all uppercase tracking-widest"
+                                 >
+                                   Manage Plan
+                                 </button>
+                               )}
                             </div>
                          </motion.div>
                        ))}

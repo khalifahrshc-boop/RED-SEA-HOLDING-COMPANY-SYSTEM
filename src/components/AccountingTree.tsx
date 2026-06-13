@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  Network, Search, Plus, FileText, Upload, BrainCircuit, Printer, Trash2, Edit3, Save, X, Activity, DollarSign, PieChart 
+  Network, Search, Plus, FileText, Upload, BrainCircuit, Printer, Trash2, Edit3, Save, X, Activity, DollarSign, PieChart, Lock
 } from 'lucide-react';
 import { useTranslation } from '../lib/translations';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { AccountingTransaction, AccountingAccount, CompanyData } from '../types';
 import { formatCurrency, formatDate } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from 'xlsx';
 
 interface AccountingTreeProps {
@@ -26,11 +27,22 @@ const DEFAULT_ACCOUNTS: AccountingAccount[] = [
 
 export function AccountingTree({ language, company }: AccountingTreeProps) {
   const { t, d } = useTranslation(language);
+  const { hasPermission } = useAuth();
   const [accounts, setAccounts] = useLocalStorage<AccountingAccount[]>('ares_accounting_accounts', DEFAULT_ACCOUNTS);
   const [transactions, setTransactions] = useLocalStorage<AccountingTransaction[]>('ares_accounting_transactions', []);
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'Tree' | 'Transactions' | 'Reports'>('Transactions');
+
+  if (!hasPermission('accounting', 'accounting-tree', 'view')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-xl border border-slate-200 p-8 text-center">
+        <Lock className="w-12 h-12 text-slate-300 mb-4" />
+        <h2 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 max-w-sm italic">You do not have the required permissions to access the Chart of Accounts. Contact your administrator to request clearance.</p>
+      </div>
+    );
+  }
 
   // Account Management States
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
@@ -358,12 +370,14 @@ ${accounts.map(a => `* **[${a.id}] ${a.name} (${a.category}):** ${a.balance.toLo
           >
             <Upload className="w-4 h-4" /> Export Trans.
           </button>
-          <button 
-            onClick={printPdf}
-            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
-          >
-            <Printer className="w-4 h-4" /> Print Tree
-          </button>
+          {hasPermission('accounting', 'accounting-tree', 'print') && (
+            <button 
+              onClick={printPdf}
+              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" /> Print Tree
+            </button>
+          )}
         </div>
       </div>
 
@@ -403,9 +417,11 @@ ${accounts.map(a => `* **[${a.id}] ${a.name} (${a.category}):** ${a.balance.toLo
                       Cancel
                     </button>
                   )}
-                  <button type="submit" className={`${editingTxId ? 'w-2/3' : 'w-full'} py-2 bg-red-600 text-white rounded text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-colors shadow flex justify-center items-center gap-2`}>
-                    <Plus className="w-3 h-3" /> {editingTxId ? 'Update Entry' : 'Add Transaction'}
-                  </button>
+                  {hasPermission('accounting', 'accounting-tree', editingTxId ? 'edit' : 'create') && (
+                    <button type="submit" className={`${editingTxId ? 'w-2/3' : 'w-full'} py-2 bg-red-600 text-white rounded text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-colors shadow flex justify-center items-center gap-2`}>
+                      <Plus className="w-3 h-3" /> {editingTxId ? 'Update Entry' : 'Add Transaction'}
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
@@ -451,12 +467,16 @@ ${accounts.map(a => `* **[${a.id}] ${a.name} (${a.category}):** ${a.balance.toLo
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => handleEditTransaction(tx)} className="p-1 text-slate-300 hover:text-red-500 transition-colors" title="Edit">
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => deleteTransaction(tx.id)} className="p-1 text-slate-300 hover:text-red-500 transition-colors" title="Delete">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {hasPermission('accounting', 'accounting-tree', 'edit') && (
+                            <button onClick={() => handleEditTransaction(tx)} className="p-1 text-slate-300 hover:text-red-500 transition-colors" title="Edit">
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {hasPermission('accounting', 'accounting-tree', 'delete') && (
+                            <button onClick={() => deleteTransaction(tx.id)} className="p-1 text-slate-300 hover:text-red-500 transition-colors" title="Delete">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -477,12 +497,14 @@ ${accounts.map(a => `* **[${a.id}] ${a.name} (${a.category}):** ${a.balance.toLo
       {activeView === 'Tree' && (
         <div className="space-y-6">
           <div className="flex justify-end">
-             <button 
-               onClick={() => handleOpenAccountModal()}
-               className="px-4 py-2 bg-red-600 text-white rounded-md text-[10px] font-bold uppercase tracking-widest shadow hover:bg-red-700 transition-colors flex items-center gap-2"
-             >
-               <Plus className="w-4 h-4" /> Add Account Node
-             </button>
+             {hasPermission('accounting', 'accounting-tree', 'create') && (
+               <button 
+                 onClick={() => handleOpenAccountModal()}
+                 className="px-4 py-2 bg-red-600 text-white rounded-md text-[10px] font-bold uppercase tracking-widest shadow hover:bg-red-700 transition-colors flex items-center gap-2"
+               >
+                 <Plus className="w-4 h-4" /> Add Account Node
+               </button>
+             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {Object.entries(groupAccounts()).map(([category, accs]) => (
@@ -504,12 +526,16 @@ ${accounts.map(a => `* **[${a.id}] ${a.name} (${a.category}):** ${a.balance.toLo
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-bold font-mono text-red-700">{formatCurrency(acc.balance)}</span>
                         <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
-                            <button onClick={() => handleOpenAccountModal(acc)} className="p-1 text-slate-400 hover:text-red-600" title="Edit">
-                                <Edit3 className="w-4 h-4" />
-                            </button>
-                            <button onClick={(e) => handleDeleteAccount(acc.id, e)} className="p-1 text-slate-400 hover:text-red-600" title="Delete">
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+                            {hasPermission('accounting', 'accounting-tree', 'edit') && (
+                              <button onClick={() => handleOpenAccountModal(acc)} className="p-1 text-slate-400 hover:text-red-600" title="Edit">
+                                  <Edit3 className="w-4 h-4" />
+                              </button>
+                            )}
+                            {hasPermission('accounting', 'accounting-tree', 'delete') && (
+                              <button onClick={(e) => handleDeleteAccount(acc.id, e)} className="p-1 text-slate-400 hover:text-red-600" title="Delete">
+                                  <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                         </div>
                       </div>
                     </div>

@@ -36,6 +36,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firebase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface DailyAttendanceScheduleMgrProps {
   projects: Project[];
@@ -183,6 +184,20 @@ const createEmptyDays = (prepTime: string = '07:00'): Record<string, ScheduleDay
 export function DailyAttendanceScheduleManager({ projects, workers, language, company, onClose }: DailyAttendanceScheduleMgrProps) {
   const isRtl = language === 'ar';
   const dict = localDict[language];
+  const { hasPermission } = useAuth();
+
+  if (!hasPermission('hr', 'attendance', 'view')) {
+    return (
+      <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 overflow-y-auto p-4 flex justify-center items-start pt-10 pb-10 font-sans text-slate-800">
+        <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 p-12 text-center animate-in fade-in zoom-in-95 duration-200">
+          <Calendar className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+          <p className="text-slate-500 italic">You do not have the required permissions to access Daily Attendance Schedules.</p>
+          <button onClick={onClose} className="mt-8 px-6 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest">{dict.back || 'Back'}</button>
+        </div>
+      </div>
+    );
+  }
 
   // List & Form State
   const [schedules, setSchedules] = useState<DailyAttendanceSchedule[]>([]);
@@ -619,13 +634,15 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
                   className={cn("w-full bg-slate-50 border border-slate-200 rounded-lg py-2 text-xs focus:ring-1 focus:ring-red-500 outline-none pr-10 font-medium", isRtl ? "pr-10" : "pl-10")}
                 />
               </div>
-              <button 
-                onClick={handleOpenCreateForm}
-                className="bg-red-600 hover:bg-red-700 transition-colors text-white py-2 px-5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                {dict.addSchedule}
-              </button>
+              {hasPermission('hr', 'attendance', 'create') && (
+                <button 
+                  onClick={handleOpenCreateForm}
+                  className="bg-red-600 hover:bg-red-700 transition-colors text-white py-2 px-5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  {dict.addSchedule}
+                </button>
+              )}
             </div>
 
             {/* List Grids */}
@@ -695,39 +712,45 @@ export function DailyAttendanceScheduleManager({ projects, workers, language, co
                         </div>
                       ) : (
                         <>
-                          <button 
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleStartEdit(sched);
-                            }}
-                            className="py-1.5 px-2 bg-slate-900 hover:bg-black text-white text-[9px] font-bold uppercase rounded text-center block transition-colors"
-                          >
-                            {dict.editSchedule}
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleOpenPrintSelection(sched);
-                            }}
-                            className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[9px] font-bold uppercase rounded text-center block transition-colors"
-                          >
-                            {dict.printSheet}
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setDeleteConfirmId(sched.id);
-                            }}
-                            className="py-1.5 px-2 border border-slate-200 hover:bg-red-50 hover:border-red-200 text-rose-600 text-[9px] font-bold uppercase rounded text-center block transition-colors"
-                          >
-                            {dict.deleteSchedule}
-                          </button>
+                          {hasPermission('hr', 'attendance', 'edit') && (
+                            <button 
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleStartEdit(sched);
+                              }}
+                              className="py-1.5 px-2 bg-slate-900 hover:bg-black text-white text-[9px] font-bold uppercase rounded text-center block transition-colors"
+                            >
+                              {dict.editSchedule}
+                            </button>
+                          )}
+                          {hasPermission('hr', 'attendance', 'print') && (
+                            <button 
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleOpenPrintSelection(sched);
+                              }}
+                              className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[9px] font-bold uppercase rounded text-center block transition-colors"
+                            >
+                              {dict.printSheet}
+                            </button>
+                          )}
+                          {hasPermission('hr', 'attendance', 'delete') && (
+                            <button 
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setDeleteConfirmId(sched.id);
+                              }}
+                              className="py-1.5 px-2 border border-slate-200 hover:bg-red-50 hover:border-red-200 text-rose-600 text-[9px] font-bold uppercase rounded text-center block transition-colors"
+                            >
+                              {dict.deleteSchedule}
+                            </button>
+                          )}
                         </>
                       )}
                     </div>

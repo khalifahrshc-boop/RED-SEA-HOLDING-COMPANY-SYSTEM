@@ -421,6 +421,90 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
     XLSX.writeFile(wb, "Equipment_Ledger.xlsx");
   };
 
+  const handleExportDispatchPDF = () => {
+    import('../lib/pdfUtils').then(({ generateStandardPDF, applyAutoTable }) => {
+        const { doc, startY } = generateStandardPDF('DISPATCH REPORTS LEDGER', company || {});
+        const tableData = dispatchReports.map(r => [r.date, r.equipmentName, r.equipmentNumber, `${r.quantity} ${r.unit}`, r.location, r.recipientName || '-']);
+        applyAutoTable(doc, {
+            startY,
+            head: [['Date', 'Equipment', 'Ref', 'Qty', 'Destination', 'Recipient']],
+            body: tableData,
+        });
+        doc.save('Dispatch_Reports_Ledger.pdf');
+    });
+  };
+
+  const handleExportDispatchExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(dispatchReports.map(r => ({
+      'Date': r.date,
+      'Equipment': r.equipmentName,
+      'Ref': r.equipmentNumber,
+      'Qty': r.quantity,
+      'Unit': r.unit,
+      'Destination': r.location,
+      'Recipient': r.recipientName
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dispatch_Reports");
+    XLSX.writeFile(wb, "Dispatch_Reports_Ledger.xlsx");
+  };
+
+  const handleExportReturnPDF = () => {
+    import('../lib/pdfUtils').then(({ generateStandardPDF, applyAutoTable }) => {
+        const { doc, startY } = generateStandardPDF('RETURN REPORTS LEDGER', company || {});
+        const tableData = returnReports.map(r => [r.date, r.equipmentName, r.equipmentNumber, `${r.quantity} ${r.unit}`, r.returnName, r.condition]);
+        applyAutoTable(doc, {
+            startY,
+            head: [['Date', 'Equipment', 'Ref', 'Qty', 'Returned By', 'Condition']],
+            body: tableData,
+        });
+        doc.save('Return_Reports_Ledger.pdf');
+    });
+  };
+
+  const handleExportReturnExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(returnReports.map(r => ({
+      'Date': r.date,
+      'Equipment': r.equipmentName,
+      'Ref': r.equipmentNumber,
+      'Qty': r.quantity,
+      'Unit': r.unit,
+      'Returned By': r.returnName,
+      'Condition': r.condition
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Return_Reports");
+    XLSX.writeFile(wb, "Return_Reports_Ledger.xlsx");
+  };
+
+  const handleExportDestructionPDF = () => {
+    import('../lib/pdfUtils').then(({ generateStandardPDF, applyAutoTable }) => {
+        const { doc, startY } = generateStandardPDF('DESTRUCTION REPORTS LEDGER', company || {});
+        const tableData = destructionReports.map(r => [r.date, r.equipmentName, r.equipmentNumber, `${r.quantity} ${r.unit}`, r.destroyerName, r.reason]);
+        applyAutoTable(doc, {
+            startY,
+            head: [['Date', 'Equipment', 'Ref', 'Qty', 'Destroyer', 'Reason']],
+            body: tableData,
+        });
+        doc.save('Destruction_Reports_Ledger.pdf');
+    });
+  };
+
+  const handleExportDestructionExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(destructionReports.map(r => ({
+      'Date': r.date,
+      'Equipment': r.equipmentName,
+      'Ref': r.equipmentNumber,
+      'Qty': r.quantity,
+      'Unit': r.unit,
+      'Destroyer': r.destroyerName,
+      'Reason': r.reason
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Destruction_Reports");
+    XLSX.writeFile(wb, "Destruction_Reports_Ledger.xlsx");
+  };
+
   const handleDelete = (id: string) => {
     setAssets(assets.filter(a => a.id !== id));
   };
@@ -1045,6 +1129,16 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                 <Printer className="w-4 h-4" /> Print Selected ({selectedReports.size})
               </button>
             )}
+            {hasPermission('internal_admin', 'equipment', 'export') && (
+              <>
+                <button onClick={handleExportDispatchPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+                  <FileText className="w-4 h-4" /> PDF
+                </button>
+                <button onClick={handleExportDispatchExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+                  <Download className="w-4 h-4" /> Excel
+                </button>
+              </>
+            )}
             {hasPermission('internal_admin', 'equipment', 'dispatch') && (
               <button onClick={() => { setEditingReport(null); setIsDispatchModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition">
                 <Plus className="w-4 h-4" /> New Dispatch Report
@@ -1058,6 +1152,16 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                 <Printer className="w-4 h-4" /> Print Selected ({selectedReturnReports.size})
               </button>
             )}
+            {hasPermission('internal_admin', 'equipment', 'export') && (
+              <>
+                <button onClick={handleExportReturnPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+                  <FileText className="w-4 h-4" /> PDF
+                </button>
+                <button onClick={handleExportReturnExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+                  <Download className="w-4 h-4" /> Excel
+                </button>
+              </>
+            )}
             {hasPermission('internal_admin', 'equipment', 'return') && (
               <button onClick={() => { setEditingReturnReport(null); setIsReturnModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-emerald-700 transition">
                 <Plus className="w-4 h-4" /> Receive Return
@@ -1070,6 +1174,16 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
               <button onClick={handlePrintSelectedDestruction} className="flex items-center gap-2 px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-rose-100 transition-colors">
                 <Printer className="w-4 h-4" /> Print Selected ({selectedDestructionReports.size})
               </button>
+            )}
+            {hasPermission('internal_admin', 'equipment', 'export') && (
+              <>
+                <button onClick={handleExportDestructionPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+                  <FileText className="w-4 h-4" /> PDF
+                </button>
+                <button onClick={handleExportDestructionExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+                  <Download className="w-4 h-4" /> Excel
+                </button>
+              </>
             )}
             {hasPermission('internal_admin', 'equipment', 'destruction') && (
               <button onClick={() => setIsDestructionModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-rose-700 transition">

@@ -34,6 +34,8 @@ import {
 } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { handleFirestoreError, OperationType } from '../lib/firebase';
+import { useAuth } from '../contexts/AuthContext';
+import { ShieldAlert } from 'lucide-react';
 
 interface WorkAreaGroupManagerProps {
   onClose: () => void;
@@ -41,7 +43,22 @@ interface WorkAreaGroupManagerProps {
 }
 
 export function WorkAreaGroupManager({ onClose, company }: WorkAreaGroupManagerProps) {
+  const { hasPermission } = useAuth();
   const [groups, setGroups] = React.useState<WorkAreaGroup[]>([]);
+
+  if (!hasPermission('hr', 'attendance', 'view')) {
+    return (
+      <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-12 max-w-md shadow-2xl text-center">
+          <ShieldAlert className="w-20 h-20 text-slate-200 mx-auto mb-6" />
+          <h2 className="text-2xl font-black text-slate-900 mb-4 uppercase tracking-tight">Access Restricted</h2>
+          <p className="text-slate-500 italic mb-8">You do not have the required permissions to access Work Area Group Management.</p>
+          <button onClick={onClose} className="px-8 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all shadow-xl">Close Window</button>
+        </div>
+      </div>
+    );
+  }
+
   const [loading, setLoading] = React.useState(true);
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentGroup, setCurrentGroup] = React.useState<Partial<WorkAreaGroup> | null>(null);
@@ -641,36 +658,40 @@ export function WorkAreaGroupManager({ onClose, company }: WorkAreaGroupManagerP
                   />
                 </div>
                 <div className="flex gap-3">
-                   <div className="dropdown relative group">
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-700 hover:bg-slate-50 transition-all">
-                      <Download className="w-4 h-4" />
-                      Bulk Export
-                      <ChevronDown className="w-3 h-3 ml-1" />
-                    </button>
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden hidden group-hover:block z-20">
-                      <button 
-                        onClick={() => handleExportPDF()}
-                        className="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2"
-                      >
-                        <FileDown className="w-4 h-4 text-red-600" />
-                        Selected ({selectedGroupIds.length})
+                   {hasPermission('hr', 'attendance', 'export') && (
+                     <div className="dropdown relative group">
+                      <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-700 hover:bg-slate-50 transition-all">
+                        <Download className="w-4 h-4" />
+                        Bulk Export
+                        <ChevronDown className="w-3 h-3 ml-1" />
                       </button>
-                      <button 
-                         onClick={() => handleExportPDF(groups)}
-                        className="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2 border-t border-slate-100"
-                      >
-                        <Printer className="w-4 h-4 text-slate-400" />
-                        All Groups
-                      </button>
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden hidden group-hover:block z-20">
+                        <button 
+                          onClick={() => handleExportPDF()}
+                          className="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2"
+                        >
+                          <FileDown className="w-4 h-4 text-red-600" />
+                          Selected ({selectedGroupIds.length})
+                        </button>
+                        <button 
+                           onClick={() => handleExportPDF(groups)}
+                          className="w-full px-4 py-2.5 text-left text-[10px] font-bold uppercase text-slate-600 hover:bg-slate-50 flex items-center gap-2 border-t border-slate-100"
+                        >
+                          <Printer className="w-4 h-4 text-slate-400" />
+                          All Groups
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <button 
-                    onClick={handleAddNew}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg"
-                  >
-                    <Plus className="w-4 h-4" />
-                    New Group
-                  </button>
+                   )}
+                  {hasPermission('hr', 'attendance', 'create') && (
+                    <button 
+                      onClick={handleAddNew}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg"
+                    >
+                      <Plus className="w-4 h-4" />
+                      New Group
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -711,24 +732,30 @@ export function WorkAreaGroupManager({ onClose, company }: WorkAreaGroupManagerP
                             </div>
                           </div>
                           <div className="flex gap-1.5 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                            <button 
-                              onClick={() => handleEdit(group)}
-                              className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button 
-                              onClick={() => handleExportPDF([group])}
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
-                            >
-                              <Printer className="w-3.5 h-3.5" />
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(group.id)}
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            {hasPermission('hr', 'attendance', 'edit') && (
+                              <button 
+                                onClick={() => handleEdit(group)}
+                                className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {hasPermission('hr', 'attendance', 'print') && (
+                              <button 
+                                onClick={() => handleExportPDF([group])}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
+                              >
+                                <Printer className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {hasPermission('hr', 'attendance', 'delete') && (
+                              <button 
+                                onClick={() => handleDelete(group.id)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </div>
 

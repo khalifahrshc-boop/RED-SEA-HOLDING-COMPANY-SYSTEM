@@ -58,6 +58,8 @@ import { handleFirestoreError, OperationType } from '../lib/firebase';
 import html2pdf from 'html2pdf.js';
 import { fixHtml2CanvasOklch } from '../lib/pdfUtils';
 
+import { useAuth } from '../contexts/AuthContext';
+
 interface DailyReportsManagerProps {
   projects: Project[];
   company?: Partial<CompanyData>;
@@ -230,6 +232,7 @@ const STANDARD_APPROVER_POSITIONS = [
 
 export function DailyReportsManager({ projects, company, language }: DailyReportsManagerProps) {
   const isRtl = language === 'ar';
+  const { hasPermission } = useAuth();
   
   // Storage for all reports loaded from Firestore
   const [reports, setReports] = useState<DailyReport[]>([]);
@@ -757,13 +760,15 @@ export function DailyReportsManager({ projects, company, language }: DailyReport
               </select>
             </div>
             
-            <button 
-              onClick={handleCreateNew}
-              className="px-5 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{isRtl ? 'إنشاء تقرير' : 'Create Report'}</span>
-            </button>
+            {hasPermission('external_admin', 'daily-reports', 'create') && (
+              <button 
+                onClick={handleCreateNew}
+                className="px-5 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{isRtl ? 'إنشاء تقرير' : 'Create Report'}</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -951,52 +956,62 @@ export function DailyReportsManager({ projects, company, language }: DailyReport
                           </td>
                           <td className="py-4 px-4">
                             <div className="flex justify-center items-center gap-1.5">
-                              <button 
-                                onClick={() => { setCurrentReport(rep); setActiveTab('preview'); }}
-                                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded border border-slate-100 transition-all"
-                                title="View details"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                              </button>
+                              {hasPermission('external_admin', 'daily-reports', 'view') && (
+                                <button 
+                                  onClick={() => { setCurrentReport(rep); setActiveTab('preview'); }}
+                                  className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded border border-slate-100 transition-all"
+                                  title="View details"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                              )}
 
-                              <button 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  setCurrentReport(rep); 
-                                  setActiveTab('preview'); 
-                                  setTimeout(() => {
-                                    handleDownloadPDF();
-                                  }, 800); 
-                                }}
-                                className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded border border-emerald-100 transition-all"
-                                title="Download PDF Report"
-                              >
-                                <FileDown className="w-3.5 h-3.5" />
-                              </button>
+                              {hasPermission('external_admin', 'daily-reports', 'print') && (
+                                <button 
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setCurrentReport(rep); 
+                                    setActiveTab('preview'); 
+                                    setTimeout(() => {
+                                      handleDownloadPDF();
+                                    }, 800); 
+                                  }}
+                                  className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded border border-emerald-100 transition-all"
+                                  title="Download PDF Report"
+                                >
+                                  <FileDown className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                                
-                               <button 
-                                 onClick={() => { setCurrentReport(rep); setActiveTab('editor'); }}
-                                className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-100 transition-all"
-                                title="Edit Report"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                              </button>
+                               {hasPermission('external_admin', 'daily-reports', 'edit') && (
+                                 <button 
+                                   onClick={() => { setCurrentReport(rep); setActiveTab('editor'); }}
+                                  className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-100 transition-all"
+                                  title="Edit Report"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                               )}
 
-                              <button 
-                                onClick={(e) => handleDuplicateReport(rep, e)}
-                                className="p-2 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 rounded border border-yellow-150 transition-all"
-                                title="Duplicate"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
+                              {hasPermission('external_admin', 'daily-reports', 'create') && (
+                                <button 
+                                  onClick={(e) => handleDuplicateReport(rep, e)}
+                                  className="p-2 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 rounded border border-yellow-150 transition-all"
+                                  title="Duplicate"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                               
-                              <button 
-                                onClick={(e) => handleDeleteReport(rep.id, e)}
-                                className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded border border-red-100 transition-all"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {hasPermission('external_admin', 'daily-reports', 'delete') && (
+                                <button 
+                                  onClick={(e) => handleDeleteReport(rep.id, e)}
+                                  className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded border border-red-100 transition-all"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

@@ -19,6 +19,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useFirestoreCollection } from '../hooks/useFirestore';
 import { numberToWords, numberToWordsAr } from '../lib/numberToWords';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PayrollManagerProps {
   workers: Worker[];
@@ -28,6 +29,18 @@ interface PayrollManagerProps {
 }
 
 export function PayrollManager({ workers, projects, company, language }: PayrollManagerProps) {
+  const { hasPermission } = useAuth();
+
+  if (!hasPermission('finance_admin', 'payroll', 'view')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-xl border border-slate-200 p-8 text-center ring-1 ring-slate-100">
+        <Users className="w-12 h-12 text-slate-300 mb-4" />
+        <h2 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 max-w-sm italic">You do not have the required permissions to access Payroll Management. Contact Finance Head.</p>
+      </div>
+    );
+  }
+
   const [periods, setPeriods] = useFirestoreCollection<PayrollPeriod>('payroll_periods', []);
   const [activeTab, setActiveTab] = useState<'Dashboard' | 'Control' | 'Archive'>('Dashboard');
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
@@ -579,12 +592,14 @@ export function PayrollManager({ workers, projects, company, language }: Payroll
                <h3 className="text-lg font-black text-slate-800 tracking-tight">Payroll Processing Cycles</h3>
                <p className="text-xs text-slate-500 font-medium">Manage monthly salaries and employee payslips.</p>
              </div>
-             <button 
-                onClick={() => setIsCreatingPeriod(true)}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20"
-              >
-                <Plus className="w-4 h-4" /> New Payroll Cycle
-             </button>
+             {hasPermission('finance_admin', 'payroll', 'create') && (
+               <button 
+                  onClick={() => setIsCreatingPeriod(true)}
+                  className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20"
+                >
+                  <Plus className="w-4 h-4" /> New Payroll Cycle
+               </button>
+             )}
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -641,30 +656,34 @@ export function PayrollManager({ workers, projects, company, language }: Payroll
                         >
                           <Eye className="w-3.5 h-3.5" /> Manage
                         </button>
-                        <button
-                          onClick={() => {
-                            const newPeriod = JSON.parse(JSON.stringify(p));
-                            newPeriod.id = `PR-${p.year}-${p.month.substring(0, 3).toUpperCase()}-COPY-${Date.now().toString().substring(8)}`;
-                            newPeriod.status = 'Draft';
-                            newPeriod.records.forEach((r: any) => { r.status = 'Draft'; r.id = `REC-${r.employeeId}-${Date.now()}-${Math.floor(Math.random()*1000)}`; });
-                            setPeriods([newPeriod, ...periods]);
-                          }}
-                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                          title="Copy Period"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if(confirm('Are you sure you want to delete this payroll period?')) {
-                              setPeriods(periods.filter(x => x.id !== p.id));
-                            }
-                          }}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Period"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {hasPermission('finance_admin', 'payroll', 'create') && (
+                          <button
+                            onClick={() => {
+                              const newPeriod = JSON.parse(JSON.stringify(p));
+                              newPeriod.id = `PR-${p.year}-${p.month.substring(0, 3).toUpperCase()}-COPY-${Date.now().toString().substring(8)}`;
+                              newPeriod.status = 'Draft';
+                              newPeriod.records.forEach((r: any) => { r.status = 'Draft'; r.id = `REC-${r.employeeId}-${Date.now()}-${Math.floor(Math.random()*1000)}`; });
+                              setPeriods([newPeriod, ...periods]);
+                            }}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Copy Period"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        )}
+                        {hasPermission('finance_admin', 'payroll', 'delete') && (
+                          <button
+                            onClick={() => {
+                              if(confirm('Are you sure you want to delete this payroll period?')) {
+                                setPeriods(periods.filter(x => x.id !== p.id));
+                              }
+                            }}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Period"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -715,12 +734,14 @@ export function PayrollManager({ workers, projects, company, language }: Payroll
              </div>
           </div>
           <div className="flex gap-3">
-             <button
-               onClick={() => exportPeriodToExcel(selectedPeriod)}
-               className="px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors uppercase tracking-wider"
-             >
-               <FileSpreadsheet className="w-4 h-4" /> Export Excel
-             </button>
+             {hasPermission('finance_admin', 'payroll', 'export') && (
+               <button
+                 onClick={() => exportPeriodToExcel(selectedPeriod)}
+                 className="px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors uppercase tracking-wider"
+               >
+                 <FileSpreadsheet className="w-4 h-4" /> Export Excel
+               </button>
+             )}
           </div>
         </div>
 
@@ -749,7 +770,7 @@ export function PayrollManager({ workers, projects, company, language }: Payroll
             </select>
           </div>
           <div className="flex gap-2">
-            {selectedPeriod.status === 'Draft' && (
+            {selectedPeriod.status === 'Draft' && hasPermission('finance_admin', 'payroll', 'edit') && (
               <button 
                 onClick={() => {
                   if(!confirm('Are you sure you want to submit this period for approval?')) return;
@@ -763,7 +784,7 @@ export function PayrollManager({ workers, projects, company, language }: Payroll
                 <CheckCircle className="w-4 h-4" /> Submit for Approval
               </button>
             )}
-            {selectedPeriod.status === 'Under Review' && (
+            {selectedPeriod.status === 'Under Review' && hasPermission('finance_admin', 'payroll', 'edit') && (
               <button 
                 onClick={() => {
                   if(!confirm('Are you sure you want to approve this period?')) return;
@@ -830,27 +851,33 @@ export function PayrollManager({ workers, projects, company, language }: Payroll
                     </td>
                     <td className="px-4 py-3 text-right">
                        <div className="flex items-center justify-end gap-1">
-                          <button 
-                            title="Edit Record"
-                            onClick={() => setEditingRecord(JSON.parse(JSON.stringify(r)))}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                          >
-                            <FileSignature className="w-4 h-4" />
-                          </button>
-                          <button 
-                            title="Print Payslip"
-                            onClick={() => generatePayslipPdf(r)}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                          >
-                            <Printer className="w-4 h-4" />
-                          </button>
-                          <button 
-                            title="Delete"
-                            onClick={() => handleDeleteRecord(selectedPeriod.id, r.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {hasPermission('finance_admin', 'payroll', 'edit') && (
+                            <button 
+                              title="Edit Record"
+                              onClick={() => setEditingRecord(JSON.parse(JSON.stringify(r)))}
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                            >
+                              <FileSignature className="w-4 h-4" />
+                            </button>
+                          )}
+                          {hasPermission('finance_admin', 'payroll', 'print') && (
+                            <button 
+                              title="Print Payslip"
+                              onClick={() => generatePayslipPdf(r)}
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </button>
+                          )}
+                          {hasPermission('finance_admin', 'payroll', 'delete') && (
+                            <button 
+                              title="Delete"
+                              onClick={() => handleDeleteRecord(selectedPeriod.id, r.id)}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                        </div>
                     </td>
                   </tr>

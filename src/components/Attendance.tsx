@@ -562,45 +562,55 @@ export function Attendance({ projects, workers, attendanceSheets, setAttendanceS
           <p className="text-slate-500 text-sm italic font-medium">Monitoring personnel deployment and verification thresholds.</p>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={() => setIsWorkAreaManagerOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-          >
-            <Users className="w-3 h-3 text-red-600" />
-            Work Area Group Management
-          </button>
-          <button 
-            onClick={() => setIsDailyScheduleMgrOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-          >
-            <Calendar className="w-3 h-3 text-red-600" />
-            {language === 'ar' ? 'جدول الحضور اليومي للمشروع' : 'Daily Attendance Schedule'}
-          </button>
-          <button 
-            onClick={() => setIsComprehensiveReportOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-          >
-            <ClipboardList className="w-3 h-3 text-red-600" />
-            Comprehensive Attendance Report
-          </button>
-          <button 
-            onClick={() => handleDirectPrintDailyAttendance()}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-            title={selectedSheetIds.length > 0 ? `Print ${selectedSheetIds.length} Selected Sheets` : "Print All Sheets"}
-          >
-            <Printer className="w-3 h-3" />
-            {selectedSheetIds.length > 0 ? `Print Selected (${selectedSheetIds.length})` : "Print All"}
-          </button>
+          {hasPermission('hr', 'attendance', 'view') && (
+            <button 
+              onClick={() => setIsWorkAreaManagerOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+            >
+              <Users className="w-3 h-3 text-red-600" />
+              Work Area Group Management
+            </button>
+          )}
+          {hasPermission('hr', 'attendance', 'view') && (
+            <button 
+              onClick={() => setIsDailyScheduleMgrOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+            >
+              <Calendar className="w-3 h-3 text-red-600" />
+              {language === 'ar' ? 'جدول الحضور اليومي للمشروع' : 'Daily Attendance Schedule'}
+            </button>
+          )}
+          {hasPermission('hr', 'attendance', 'print') && (
+            <button 
+              onClick={() => setIsComprehensiveReportOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+            >
+              <ClipboardList className="w-3 h-3 text-red-600" />
+              Comprehensive Attendance Report
+            </button>
+          )}
+          {hasPermission('hr', 'attendance', 'print') && (
+            <button 
+              onClick={() => handleDirectPrintDailyAttendance()}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+              title={selectedSheetIds.length > 0 ? `Print ${selectedSheetIds.length} Selected Sheets` : "Print All Sheets"}
+            >
+              <Printer className="w-3 h-3" />
+              {selectedSheetIds.length > 0 ? `Print Selected (${selectedSheetIds.length})` : "Print All"}
+            </button>
+          )}
           
-          <button 
-            disabled={isGeneratingDailyPDF}
-            onClick={() => handleExportDailyAttendancePDF()}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
-            title={selectedSheetIds.length > 0 ? `Export ${selectedSheetIds.length} Selected PDF` : "Export All PDF"}
-          >
-            <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
-            {isGeneratingDailyPDF ? 'Exporting...' : (selectedSheetIds.length > 0 ? `Export PDF (${selectedSheetIds.length})` : "A4 PDF Export")}
-          </button>
+          {hasPermission('hr', 'attendance', 'print') && (
+            <button 
+              disabled={isGeneratingDailyPDF}
+              onClick={() => handleExportDailyAttendancePDF()}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 bg-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50"
+              title={selectedSheetIds.length > 0 ? `Export ${selectedSheetIds.length} Selected PDF` : "Export All PDF"}
+            >
+              <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
+              {isGeneratingDailyPDF ? 'Exporting...' : (selectedSheetIds.length > 0 ? `Export PDF (${selectedSheetIds.length})` : "A4 PDF Export")}
+            </button>
+          )}
           <button 
             disabled={!hasPermission('hr', 'attendance', 'approve')}
             onClick={() => {

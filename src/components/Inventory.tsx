@@ -23,7 +23,7 @@ import { Asset, Project } from '@/src/types';
 import { useTranslation, Language } from '../lib/translations';
 import { useAuth } from '../contexts/AuthContext';
 import * as XLSX from 'xlsx';
-import { Printer } from 'lucide-react';
+import { Printer, FileText } from 'lucide-react';
 
 const initialAssets: Asset[] = [
   { 
@@ -92,6 +92,17 @@ interface InventoryProps {
 export function Inventory({ language, projects, onUpdateProject, assets, setAssets }: InventoryProps) {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
+
+  if (!hasPermission('external_admin', 'inventory', 'view')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-xl border border-slate-200 p-8 text-center ring-1 ring-slate-100">
+        <Package className="w-12 h-12 text-slate-300 mb-4" />
+        <h2 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-tight">Access Restricted</h2>
+        <p className="text-slate-500 max-w-sm italic">You do not have the required permissions to access the Inventory Ledger. Contact your department lead for clearance.</p>
+      </div>
+    );
+  }
+
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingAsset, setEditingAsset] = React.useState<Asset | null>(null);
@@ -193,6 +204,28 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
     XLSX.writeFile(wb, `Asset_Inventory_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const handlePrintPDF = async () => {
+    const { generateStandardPDF, applyAutoTable } = await import('../lib/pdfUtils');
+    const { doc, startY } = generateStandardPDF('INVENTORY ASSET LEDGER', company || {});
+    
+    const tableData = assets.map(a => [
+      a.referenceNumber,
+      a.name,
+      a.category,
+      a.status,
+      a.location,
+      formatCurrency(a.value)
+    ]);
+
+    applyAutoTable(doc, {
+      startY,
+      head: [['Ref No', 'Asset Name', 'Category', 'Status', 'Location', 'Value']],
+      body: tableData,
+    });
+
+    doc.save(`Inventory_Ledger_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   const getCategoryIcon = (cat: string) => {
     switch (cat) {
       case 'Heavy Equipment': return <Wrench className="w-4 h-4" />;
@@ -211,16 +244,25 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
           <p className="text-slate-500 text-sm italic font-medium">Unified Tracking and Asset Node Identification.</p>
         </div>
         <div className="flex gap-3">
-          {hasPermission('internal_admin', 'inventory', 'export') && (
-            <button 
-              onClick={exportToExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-            >
-              <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
-              Export Ledger
-            </button>
+          {hasPermission('external_admin', 'inventory', 'export') && (
+            <div className="flex gap-2">
+              <button 
+                onClick={exportToExcel}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+              >
+                <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
+                Excel
+              </button>
+              <button 
+                onClick={handlePrintPDF}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+              >
+                <FileText className="w-3 h-3 text-red-600" />
+                PDF
+              </button>
+            </div>
           )}
-          {hasPermission('internal_admin', 'inventory', 'create') && (
+          {hasPermission('external_admin', 'inventory', 'create') && (
             <button 
               onClick={() => { setEditingAsset(null); setIsModalOpen(true); }}
               className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95"
@@ -281,7 +323,7 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
                 </div>
               </div>
               <div className="flex gap-1">
-                {hasPermission('internal_admin', 'inventory', 'edit') && (
+                {hasPermission('external_admin', 'inventory', 'edit') && (
                   <button 
                     onClick={() => { setEditingAsset(asset); setIsModalOpen(true); }}
                     className="p-1.5 text-slate-300 hover:text-red-600 transition-colors rounded-md hover:bg-red-50"
@@ -289,7 +331,7 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
                     <Edit3 className="w-3 h-3" />
                   </button>
                 )}
-                {hasPermission('internal_admin', 'inventory', 'delete') && (
+                {hasPermission('external_admin', 'inventory', 'delete') && (
                   <button 
                     onClick={() => handleDelete(asset.id)}
                     className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors rounded-md hover:bg-rose-50"
