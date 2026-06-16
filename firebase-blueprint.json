@@ -267,6 +267,45 @@
     "/dailyReports/{id}": {
       "schema": "DailyReport",
       "description": "Flexible daily reports"
+    },
+    "/dispatch_reports/{id}": {
+      "description": "Dispatch reports for equipment transfers"
+    },
+    "/return_reports/{id}": {
+      "description": "Return reports for returned equipment"
+    },
+    "/destruction_reports/{id}": {
+      "description": "Reports detailing equipment destruction"
+    },
+    "/transfer_requests/{id}": {
+      "description": "Equipment transfer request letters/orders"
+    },
+    "/sirs/{id}": {
+      "description": "Site inspection requests and history logs"
+    },
+    "/accounting_accounts/{id}": {
+      "description": "Ledger accounts for general bookkeeping"
+    },
+    "/accounting_transactions/{id}": {
+      "description": "Double-entry bookkeeping financial receipts"
+    },
+    "/procurement_quotes/{id}": {
+      "description": "Supplier price quotes"
+    },
+    "/procurement_pos/{id}": {
+      "description": "Purchase orders for materials/equipment"
+    },
+    "/accommodations/{id}": {
+      "description": "Housing camps with bed allocation status"
+    },
+    "/food_inventory/{id}": {
+      "description": "Catering inventory counts"
+    },
+    "/contractor_claims/{id}": {
+      "description": "Delay claim documents submitted by contractors"
+    },
+    "/contract_drafts/{id}": {
+      "description": "Wizard-generated legal contracts"
     }
   }
 }

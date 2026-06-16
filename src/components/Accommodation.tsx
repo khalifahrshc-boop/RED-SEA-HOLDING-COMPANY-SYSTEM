@@ -26,7 +26,7 @@ import { Accommodation as AccommodationType } from '@/src/types';
 import { useTranslation, Language } from '../lib/translations';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 import { useAuth } from '../contexts/AuthContext';
 import { ShieldAlert } from 'lucide-react';
 
@@ -61,7 +61,7 @@ interface AccommodationProps {
 export function Accommodation({ language, company }: AccommodationProps) {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
-  const [accommodations, setAccommodations] = useLocalStorage<AccommodationType[]>('ares_accommodations', initialAccommodations);
+  const [accommodations, setAccommodations] = useFirestoreCollection<AccommodationType>('accommodations', initialAccommodations);
 
   if (!hasPermission('internal_admin', 'accommodation', 'view')) {
     return (
@@ -73,7 +73,7 @@ export function Accommodation({ language, company }: AccommodationProps) {
     );
   }
 
-  const [foodInventory, setFoodInventory] = useLocalStorage<FoodInventory[]>('ares_foodInventory', initialFoodInventory);
+  const [foodInventory, setFoodInventory] = useFirestoreCollection<FoodInventory>('food_inventory', initialFoodInventory);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingAccommodation, setEditingAccommodation] = React.useState<AccommodationType | null>(null);

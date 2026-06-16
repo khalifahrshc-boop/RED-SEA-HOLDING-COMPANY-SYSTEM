@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useFirestoreCollection } from "../hooks/useFirestore";
 import { translations, Language } from "../lib/translations";
 import { Project } from "../types";
 import {
@@ -147,8 +147,8 @@ export function ContractorClaims({
 }: ContractorClaimsProps) {
   const isRtl = language === "ar";
 
-  const [reports, setReports] = useLocalStorage<ClaimReport[]>(
-    "ares_contractor_claims",
+  const [reports, setReports] = useFirestoreCollection<ClaimReport>(
+    "contractor_claims",
     [],
   );
   const [currentReportId, setCurrentReportId] = useState<string | null>(null);

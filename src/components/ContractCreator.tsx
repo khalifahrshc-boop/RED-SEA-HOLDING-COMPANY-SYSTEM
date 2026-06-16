@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn, createAuditLog, triggerSystemNotification } from '../lib/utils';
 import { ContractDraft, CompanyData } from '../types';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 
 interface ContractCreatorProps {
   company: CompanyData;
@@ -29,7 +29,7 @@ interface ContractCreatorProps {
 }
 
 export function ContractCreator({ company, language }: ContractCreatorProps) {
-  const [drafts, setDrafts] = useLocalStorage<ContractDraft[]>('ares_contract_drafts', []);
+  const [drafts, setDrafts] = useFirestoreCollection<ContractDraft>('contract_drafts', []);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isTranslating, setIsTranslating] = useState(false);

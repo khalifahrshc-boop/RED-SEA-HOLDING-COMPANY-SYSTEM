@@ -6,7 +6,7 @@ import { formatCurrency, cn, triggerSystemNotification, createAuditLog } from '.
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 import { useAuth } from '../contexts/AuthContext';
 
 interface EquipmentProps {
@@ -83,10 +83,10 @@ const initialAssets: Asset[] = [
 export function Equipment({ language, projects, company, assets, setAssets }: EquipmentProps) {
   const { userData, hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<'inventory' | 'dispatch' | 'return' | 'destruction' | 'requests'>('inventory');
-  const [dispatchReports, setDispatchReports] = useLocalStorage<DispatchReport[]>('ares_dispatch_reports', []);
-  const [returnReports, setReturnReports] = useLocalStorage<ReturnReport[]>('ares_return_reports', []);
-  const [destructionReports, setDestructionReports] = useLocalStorage<DestructionReport[]>('ares_destruction_reports', []);
-  const [transferRequests, setTransferRequests] = useLocalStorage<TransferRequest[]>('ares_transfer_requests', []);
+  const [dispatchReports, setDispatchReports] = useFirestoreCollection<DispatchReport>('dispatch_reports', []);
+  const [returnReports, setReturnReports] = useFirestoreCollection<ReturnReport>('return_reports', []);
+  const [destructionReports, setDestructionReports] = useFirestoreCollection<DestructionReport>('destruction_reports', []);
+  const [transferRequests, setTransferRequests] = useFirestoreCollection<TransferRequest>('transfer_requests', []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);

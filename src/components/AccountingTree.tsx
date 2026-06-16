@@ -3,7 +3,7 @@ import {
   Network, Search, Plus, FileText, Upload, BrainCircuit, Printer, Trash2, Edit3, Save, X, Activity, DollarSign, PieChart, Lock
 } from 'lucide-react';
 import { useTranslation } from '../lib/translations';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 import { AccountingTransaction, AccountingAccount, CompanyData } from '../types';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,8 +28,8 @@ const DEFAULT_ACCOUNTS: AccountingAccount[] = [
 export function AccountingTree({ language, company }: AccountingTreeProps) {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
-  const [accounts, setAccounts] = useLocalStorage<AccountingAccount[]>('ares_accounting_accounts', DEFAULT_ACCOUNTS);
-  const [transactions, setTransactions] = useLocalStorage<AccountingTransaction[]>('ares_accounting_transactions', []);
+  const [accounts, setAccounts] = useFirestoreCollection<AccountingAccount>('accounting_accounts', DEFAULT_ACCOUNTS);
+  const [transactions, setTransactions] = useFirestoreCollection<AccountingTransaction>('accounting_transactions', []);
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'Tree' | 'Transactions' | 'Reports'>('Transactions');

@@ -34,6 +34,7 @@ import {
 import QRCode from 'qrcode';
 import { SirRequest, SirComment, SirHistoryLog, Project, CompanyData } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 import { fixHtml2CanvasOklch } from '../lib/pdfUtils';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
@@ -283,7 +284,7 @@ const dummySIRs: SirRequest[] = [
 ];
 
 export function SirManager({ projects, company, language }: SirManagerProps) {
-  const [sirs, setSirs] = useLocalStorage<SirRequest[]>('ares_sir_records', dummySIRs);
+  const [sirs, setSirs] = useFirestoreCollection<SirRequest>('sirs', dummySIRs);
   const [activeRole, setActiveRole] = useLocalStorage<'Contractor' | 'Inspector' | 'Admin'>('ares_sir_active_role', 'Admin');
 
   // Search, Filters & Sorting

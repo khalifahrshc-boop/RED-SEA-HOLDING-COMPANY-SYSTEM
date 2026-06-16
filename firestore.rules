@@ -351,6 +351,19 @@ service cloud.firestore {
     match /project_daily_outputs/{id} { allow read, write: if isSignedIn(); }
     match /productivity_records/{id} { allow read, write: if isSignedIn(); }
     match /payroll_periods/{id} { allow read, write: if isSignedIn(); }
+    match /dispatch_reports/{id} { allow read, write: if isSignedIn(); }
+    match /return_reports/{id} { allow read, write: if isSignedIn(); }
+    match /destruction_reports/{id} { allow read, write: if isSignedIn(); }
+    match /transfer_requests/{id} { allow read, write: if isSignedIn(); }
+    match /sirs/{id} { allow read, write: if isSignedIn(); }
+    match /accounting_accounts/{id} { allow read, write: if isSignedIn(); }
+    match /accounting_transactions/{id} { allow read, write: if isSignedIn(); }
+    match /procurement_quotes/{id} { allow read, write: if isSignedIn(); }
+    match /procurement_pos/{id} { allow read, write: if isSignedIn(); }
+    match /accommodations/{id} { allow read, write: if isSignedIn(); }
+    match /food_inventory/{id} { allow read, write: if isSignedIn(); }
+    match /contractor_claims/{id} { allow read, write: if isSignedIn(); }
+    match /contract_drafts/{id} { allow read, write: if isSignedIn(); }
     // ----------------------------------------------------------------------
     // /dailyReports/{id}
     // ----------------------------------------------------------------------

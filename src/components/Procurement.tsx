@@ -77,7 +77,7 @@ const dummyPOs: PurchaseOrder[] = [
   }
 ];
 
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 import { useAuth } from '../contexts/AuthContext';
 
 import { notificationService } from '../lib/notificationService';
@@ -104,8 +104,8 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
   }
 
   const [activeTab, setActiveTab] = React.useState<'quotes' | 'pos'>('quotes');
-  const [quotes, setQuotes] = useLocalStorage<PriceQuote[]>('ares_quotes', dummyQuotes);
-  const [pos, setPos] = useLocalStorage<PurchaseOrder[]>('ares_pos', dummyPOs);
+  const [quotes, setQuotes] = useFirestoreCollection<PriceQuote>('procurement_quotes', dummyQuotes);
+  const [pos, setPos] = useFirestoreCollection<PurchaseOrder>('procurement_pos', dummyPOs);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isEditMode, setIsEditMode] = React.useState(false);
