@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useFirestoreCollection } from "../hooks/useFirestore";
 import {
   Download,
   Plus,
@@ -92,23 +93,13 @@ export const ProjectCharter: React.FC<ProjectCharterProps> = ({
   projects,
   company,
 }) => {
-  const [charters, setCharters] = useState<CharterData[]>([]);
+  const [charters, setCharters] = useFirestoreCollection<CharterData>('project_charters', []);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formData, setFormData] = useState<CharterData>(emptyCharter);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("rshc_project_charters");
-    if (saved) {
-      try {
-        setCharters(JSON.parse(saved));
-      } catch (e) {}
-    }
-  }, []);
-
   const saveToLocal = (data: CharterData[]) => {
     setCharters(data);
-    localStorage.setItem("rshc_project_charters", JSON.stringify(data));
   };
 
   const handleNew = () => {

@@ -48,6 +48,7 @@ import {
 import * as XLSX from 'xlsx';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 import { cn, createAuditLog, triggerSystemNotification } from '../lib/utils';
 import { Project } from '../types';
 import { 
@@ -97,12 +98,12 @@ export function Planning({ projects, workers, language, company }: PlanningProps
     }
   };
 
-  // --- LOCAL PERSISTED STATES ---
-  const [wbsNodes, setWbsNodes] = useLocalStorage<WbsNode[]>('ares_p6_wbs', INITIAL_WBS_NODES);
-  const [activities, setActivities] = useLocalStorage<Activity[]>('ares_p6_activities', INITIAL_ACTIVITIES);
-  const [resources, setResources] = useLocalStorage<PlanningResource[]>('ares_p6_resources', INITIAL_RESOURCES);
-  const [constructionProgress, setConstructionProgress] = useLocalStorage<ConstructionProgress[]>('ares_p6_progress', INITIAL_CONSTRUCTION_PROGRESS);
-  const [auditLogs, setAuditLogs] = useLocalStorage<PrimaveraAuditLog[]>('ares_p6_audit_logs', [
+  // --- FIRESTORE PERSISTED PLANNER STATES ---
+  const [wbsNodes, setWbsNodes] = useFirestoreCollection<WbsNode>('p6_wbs', INITIAL_WBS_NODES);
+  const [activities, setActivities] = useFirestoreCollection<Activity>('p6_activities', INITIAL_ACTIVITIES);
+  const [resources, setResources] = useFirestoreCollection<PlanningResource>('p6_resources', INITIAL_RESOURCES);
+  const [constructionProgress, setConstructionProgress] = useFirestoreCollection<ConstructionProgress>('p6_progress', INITIAL_CONSTRUCTION_PROGRESS);
+  const [auditLogs, setAuditLogs] = useFirestoreCollection<PrimaveraAuditLog>('p6_audit_logs', [
     { id: '1', timestamp: '2026-05-20T10:00:00Z', user: 'Eng. Khalid Al-Otaibi', role: 'Project Manager', action: 'Initial Schedule Baseline', details: 'WBS structure mapped and verified against master contract.' }
   ]);
   
@@ -110,7 +111,7 @@ export function Planning({ projects, workers, language, company }: PlanningProps
   const [historyStack, setHistoryStack] = useState<Activity[][]>([]);
   
   // Versions state
-  const [baselines, setBaselines] = useLocalStorage<Array<{id: string, name: string, date: string, activityCount: number}>>('ares_p6_baselines', [
+  const [baselines, setBaselines] = useFirestoreCollection<any>('p6_baselines', [
     { id: 'BASE-1', name: 'Original Contract Baseline v1.0', date: '2024-01-10', activityCount: 9 }
   ]);
 
@@ -135,7 +136,7 @@ export function Planning({ projects, workers, language, company }: PlanningProps
 
   // User Roles Configuration
   const [selectedUserRole, setSelectedUserRole] = useState<'Admin' | 'Project Manager' | 'Planner' | 'Engineer' | 'Supervisor' | 'Viewer'>('Admin');
-  const [customProfiles, setCustomProfiles] = useLocalStorage<UserRoleProfile[]>('ares_p6_user_profiles', INITIAL_USER_PROFILES);
+  const [customProfiles, setCustomProfiles] = useFirestoreCollection<UserRoleProfile>('p6_user_profiles', INITIAL_USER_PROFILES);
 
   // MODAL FOR CRUD CONTROL - Activity & WBS
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);

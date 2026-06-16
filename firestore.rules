@@ -364,6 +364,15 @@ service cloud.firestore {
     match /food_inventory/{id} { allow read, write: if isSignedIn(); }
     match /contractor_claims/{id} { allow read, write: if isSignedIn(); }
     match /contract_drafts/{id} { allow read, write: if isSignedIn(); }
+    match /planning_tasks/{id} { allow read, write: if isSignedIn(); }
+    match /project_charters/{id} { allow read, write: if isSignedIn(); }
+    match /p6_wbs/{id} { allow read, write: if isSignedIn(); }
+    match /p6_activities/{id} { allow read, write: if isSignedIn(); }
+    match /p6_resources/{id} { allow read, write: if isSignedIn(); }
+    match /p6_progress/{id} { allow read, write: if isSignedIn(); }
+    match /p6_baselines/{id} { allow read, write: if isSignedIn(); }
+    match /p6_user_profiles/{id} { allow read, write: if isSignedIn(); }
+    match /p6_audit_logs/{id} { allow read, write: if isSignedIn(); }
     // ----------------------------------------------------------------------
     // /dailyReports/{id}
     // ----------------------------------------------------------------------

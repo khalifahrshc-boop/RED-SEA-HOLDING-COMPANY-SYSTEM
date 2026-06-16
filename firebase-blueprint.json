@@ -306,6 +306,33 @@
     },
     "/contract_drafts/{id}": {
       "description": "Wizard-generated legal contracts"
+    },
+    "/planning_tasks/{id}": {
+      "description": "Project task dependencies and milestones"
+    },
+    "/project_charters/{id}": {
+      "description": "Project initiation and charter documentation"
+    },
+    "/p6_wbs/{id}": {
+      "description": "Primavera planning Work Breakdown Structure nodes"
+    },
+    "/p6_activities/{id}": {
+      "description": "Primavera planning activity lists and milestones"
+    },
+    "/p6_resources/{id}": {
+      "description": "Primavera planning resource management"
+    },
+    "/p6_progress/{id}": {
+      "description": "Primavera planning construction progress state"
+    },
+    "/p6_baselines/{id}": {
+      "description": "Primavera planning baselines for snapshots"
+    },
+    "/p6_user_profiles/{id}": {
+      "description": "Primavera planning custom workspace user profiles"
+    },
+    "/p6_audit_logs/{id}": {
+      "description": "Primavera planning audit logging trail"
     }
   }
 }

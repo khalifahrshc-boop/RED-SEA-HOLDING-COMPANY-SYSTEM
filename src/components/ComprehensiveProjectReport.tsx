@@ -48,7 +48,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, getCleanLogoBase64 } from '../lib/utils';
 import { Project, Worker, ProjectResource, AttendanceSheet, AdditionalCost, DailyExpenditure, BudgetVarianceReport, ProjectTask, DailyOutputRec } from '../types';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 import { fixHtml2CanvasOklch } from '../lib/pdfUtils';
 
 interface ComprehensiveProjectReportProps {
@@ -93,20 +93,20 @@ export function ComprehensiveProjectReport({
     financialHealth: string;
   } | null>(null);
 
-  // Load related data from localStorage that might not be in props
-  const [attendanceSheets] = useLocalStorage<AttendanceSheet[]>('ares_attendanceSheets', []);
-  const [additionalCosts] = useLocalStorage<AdditionalCost[]>('ares_additionalCosts', []);
-  const [expenditures] = useLocalStorage<DailyExpenditure[]>('ares_expenditures', []);
-  const [varianceReports] = useLocalStorage<BudgetVarianceReport[]>('ares_varianceReports', []);
-  const [planningTasks] = useLocalStorage<ProjectTask[]>('ares_planning_tasks', []);
-  const [dailyOutputs] = useLocalStorage<DailyOutputRec[]>('ares_dailyOutputs', []);
+  // Load related data from Firestore collections
+  const [attendanceSheets] = useFirestoreCollection<AttendanceSheet>('attendanceSheets', []);
+  const [additionalCosts] = useFirestoreCollection<AdditionalCost>('additionalCosts', []);
+  const [expenditures] = useFirestoreCollection<DailyExpenditure>('expenditures', []);
+  const [varianceReports] = useFirestoreCollection<BudgetVarianceReport>('varianceReports', []);
+  const [planningTasks] = useFirestoreCollection<ProjectTask>('planning_tasks', []);
+  const [dailyOutputs] = useFirestoreCollection<any>('project_daily_outputs', []);
   
-  const [quotes] = useLocalStorage<any[]>('ares_quotes', [
+  const [quotes] = useFirestoreCollection<any>('procurement_quotes', [
     { id: 'QT-8821', projectId: 'P1', vendorName: 'Global Concrete Ltd', date: '2024-04-10', totalAmount: 45000, status: 'Approved' },
     { id: 'QT-8822', projectId: 'P1', vendorName: 'Atlas Steel', date: '2024-04-12', totalAmount: 125000, status: 'Sent' },
     { id: 'QT-8901', projectId: 'P2', vendorName: 'Horizon Logistics', date: '2024-04-15', totalAmount: 8400, status: 'Approved' },
   ]);
-  const [pos] = useLocalStorage<any[]>('ares_pos', [
+  const [pos] = useFirestoreCollection<any>('procurement_pos', [
     { id: 'PO-2024-001', projectId: 'P1', vendorName: 'Global Concrete Ltd', date: '2024-04-12', totalAmount: 45000, status: 'Issued' },
     { id: 'PO-2024-002', projectId: 'P2', vendorName: 'Horizon Logistics', date: '2024-04-18', totalAmount: 8400, status: 'Received' },
   ]);

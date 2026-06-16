@@ -61,6 +61,7 @@ import { Project, Worker, ProjectResource, ProjectTask, Asset, ClientInfo } from
 import { useTranslation, Language } from '../lib/translations';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useFirestoreCollection } from '../hooks/useFirestore';
 import { notificationService } from '../lib/notificationService';
 
 const dummyInvoices = [
@@ -237,7 +238,7 @@ export function Projects({
   const [activeTab, setActiveTab] = React.useState<'Analytics' | 'Personnel' | 'Resources' | 'Financial' | 'Roadmap' | 'Productivity Metrics' | 'Daily Output'>('Analytics');
 
   // Daily Output production report state
-  const [localDailyOutputs, setLocalDailyOutputs] = useLocalStorage<any[]>('ares_project_daily_outputs', [
+  const [localDailyOutputs, setLocalDailyOutputs] = useFirestoreCollection<any>('project_daily_outputs', [
     {
       id: 'DO-001',
       projectId: 'PRJ-24-001',
@@ -907,7 +908,7 @@ export function Projects({
   const [bulkFilter, setBulkFilter] = React.useState<'All' | 'Material' | 'Equipment'>('All');
   const [bulkSearch, setBulkSearch] = React.useState('');
 
-  const [tasks, setTasks] = useLocalStorage<ProjectTask[]>('ares_planning_tasks', []);
+  const [tasks, setTasks] = useFirestoreCollection<ProjectTask>('planning_tasks', []);
 
   // Safe reactive task populator to inject default timeline components (e.g. Oxygen paint, Painting, Concrete pouring) with breaks
   React.useEffect(() => {
