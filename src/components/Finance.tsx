@@ -70,7 +70,7 @@ interface FinanceProps {
 
 export function Finance({ invoices, setInvoices, costSheets, setCostSheets, workers, language, projects, onUpdateProject, company, onNavigate }: FinanceProps) {
   const { t, d } = useTranslation(language);
-  const { hasPermission } = useAuth();
+  const { hasPermission, userData, user } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'Invoices' | 'Payrolls' | 'Costing' | 'Ledgers' | 'AccountingTree'>('Invoices');
   const [isCreatingCosting, setIsCreatingCosting] = React.useState(false);
   const [editingCostSheetId, setEditingCostSheetId] = React.useState<string | null>(null);
@@ -241,6 +241,11 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
         discountValue: invoiceDiscountValue,
         discountAmount: actualDiscount,
         type: invoiceType,
+        submittedBy: invoices.find(i => i.id === editingInvoiceId)?.submittedBy || (userData || user ? {
+          uid: user?.uid || '',
+          name: userData?.name || user?.displayName || 'Anonymous',
+          email: userData?.email || user?.email || '',
+        } : undefined),
       };
 
       if (editingInvoiceId) {
@@ -1161,6 +1166,11 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
                       <p className="text-sm text-slate-700 font-bold">
                         {inv.project ? d(inv.project) : <span className="text-slate-400 italic font-normal">{d('No Linked Project')}</span>}
                       </p>
+                      {inv.submittedBy && (
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                          {d('Submitted by')}: <span className="font-semibold text-slate-500">{inv.submittedBy.name}</span>
+                        </p>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right border-y border-slate-100">
                       <p className="text-sm font-bold text-slate-900">{formatCurrency(inv.total)}</p>

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useTranslation, Language } from "../lib/translations";
-import { CompanyData, AuditLog, UserData as UserDataInterface, UserPermissions, SectionPermission, DepartmentPermission } from "../types";
+import { CompanyData, AuditLog, UserData as UserDataInterface, UserPermissions, SectionPermission, DepartmentPermission, Invoice } from "../types";
 import { createAuditLog } from "../lib/utils";
 import { db, handleFirestoreError, OperationType, storage } from "../lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -107,9 +107,10 @@ interface SettingsProps {
   language: Language;
   company: CompanyData;
   setCompany: (c: CompanyData) => void;
+  invoices?: Invoice[];
 }
 
-export function Settings({ language, company, setCompany }: SettingsProps) {
+export function Settings({ language, company, setCompany, invoices = [] }: SettingsProps) {
   const { t, d } = useTranslation(language);
   const [activeTab, setActiveTab] = React.useState<
     "company" | "users" | "formats" | "audit" | "storage"
@@ -121,6 +122,7 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
   const [isEditingUserRoleOpen, setIsEditingUserRoleOpen] = React.useState<
     string | null
   >(null);
+  const [userModalTab, setUserModalTab] = React.useState<"authority" | "invoices">("authority");
   const [isFormatModalOpen, setIsFormatModalOpen] = React.useState(false);
   const [selectedFormat, setSelectedFormat] = React.useState("");
 
@@ -1399,7 +1401,7 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div>
                 <h3 className="font-bold text-slate-900 uppercase tracking-widest text-sm flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-red-600" /> Modify Authority
+                  <Shield className="w-4 h-4 text-red-600" /> Personnel Profile & Activity
                 </h3>
                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">
                   Personnel:{" "}
@@ -1411,14 +1413,49 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                   setIsEditingUserRoleOpen(null);
                   setPermissionState({ departments: [] });
                   setSelectedDept("");
+                  setUserModalTab("authority");
                 }}
                 className="text-slate-400 hover:text-rose-600 transition-colors"
               >
                 &times;
               </button>
             </div>
+
+            {/* Modal Tabs */}
+            <div className="flex border-b border-slate-100 bg-slate-50 px-6">
+              <button
+                onClick={() => setUserModalTab("authority")}
+                className={cn(
+                  "py-3 px-4 text-xs font-bold uppercase tracking-wider border-b-2 transition-all",
+                  userModalTab === "authority"
+                    ? "border-red-600 text-red-600 font-extrabold"
+                    : "border-transparent text-slate-400 hover:text-slate-600"
+                )}
+              >
+                Authority & Permissions
+              </button>
+              <button
+                onClick={() => setUserModalTab("invoices")}
+                className={cn(
+                  "py-3 px-4 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2",
+                  userModalTab === "invoices"
+                    ? "border-red-600 text-red-600 font-extrabold"
+                    : "border-transparent text-slate-400 hover:text-slate-600"
+                )}
+              >
+                Invoices Submitted
+                <span className="bg-slate-200 text-slate-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  {(() => {
+                    const cu = users.find((u) => u.id === isEditingUserRoleOpen);
+                    return cu ? invoices.filter(inv => inv.submittedBy?.uid === cu.id || inv.submittedBy?.email === cu.email).length : 0;
+                  })()}
+                </span>
+              </button>
+            </div>
+
             <div className="p-6 space-y-6 overflow-y-auto min-h-0 flex-1">
-              <div className="space-y-4">
+              {userModalTab === "authority" ? (
+                <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                     Primary Department
@@ -1561,26 +1598,116 @@ export function Settings({ language, company, setCompany }: SettingsProps) {
                       </div>
                     </div>
                   )}
-              </div>
+                </div>
+              ) : (
+                <div className="space-y-4 font-sans">
+                  <div className="flex items-center justify-between border-b border-slate-150 pb-3">
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Submissions & Account Ledgers
+                    </h4>
+                    <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded border border-slate-200 font-bold text-slate-500">
+                      SYS_LINKED_USERS
+                    </span>
+                  </div>
+                  {(() => {
+                    const cu = users.find((u) => u.id === isEditingUserRoleOpen);
+                    const userInvoices = cu
+                      ? invoices.filter(
+                          (inv) =>
+                            inv.submittedBy?.uid === cu.id ||
+                            inv.submittedBy?.email === cu.email
+                        )
+                      : [];
+                    if (userInvoices.length === 0) {
+                      return (
+                        <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200 my-4">
+                          <p className="text-xs text-slate-400 italic">No submitted invoices found linked to this account.</p>
+                          <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold tracking-wider">Create a standard invoice in the Financial tab to populate</p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+                        {userInvoices.map((inv) => (
+                          <div
+                            key={inv.id}
+                            className="p-4 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 transition-all flex justify-between items-center group/card"
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono font-bold text-slate-900 group-hover/card:text-red-600 transition-colors">{inv.id}</span>
+                                <span className={cn(
+                                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[8px] font-bold uppercase tracking-tight",
+                                  inv.status === 'Paid' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                                  inv.status === 'Approved' ? "bg-emerald-600 text-white border-emerald-600" :
+                                  inv.status === 'Pending Official Approval' ? "bg-amber-600 text-white border-amber-600" :
+                                  inv.status === 'Pending Finance' ? "bg-red-600 text-white border-red-600" :
+                                  inv.status === 'Sent' ? "bg-red-50 text-red-700 border-red-100" :
+                                  "bg-slate-100 text-slate-600 border-slate-200"
+                                )}>
+                                  {d(inv.status)}
+                                </span>
+                              </div>
+                              <p className="text-[10px] font-bold text-slate-800 uppercase">
+                                {inv.project ? d(inv.project) : "No linked project"}
+                              </p>
+                              <p className="text-[9px] text-slate-400 font-medium">
+                                Date: {inv.date || (inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : '')}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs font-bold text-slate-900">
+                                {new Intl.NumberFormat(language === "ar" ? "ar-SA" : "en-US", {
+                                  style: "currency",
+                                  currency: "SAR",
+                                }).format(inv.total)}
+                              </p>
+                              <p className="text-[8px] text-slate-400 font-bold uppercase font-mono tracking-wider">VAT Inclusive (15%)</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-3 p-6 border-t border-slate-100 bg-slate-50/50">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditingUserRoleOpen(null);
-                  setPermissionState({ departments: [] });
-                  setSelectedDept("");
-                }}
-                className="px-4 py-2 text-slate-500 text-xs font-bold uppercase tracking-widest hover:text-slate-700 transition-colors"
-              >
-                Discard
-              </button>
-              <button
-                onClick={() => handleUpdatePermissions(isEditingUserRoleOpen)}
-                className="px-6 py-2 bg-slate-900 text-white rounded text-xs font-bold uppercase tracking-widest hover:bg-black transition-all shadow-lg active:scale-95"
-              >
-                Update Authority
-              </button>
+              {userModalTab === "authority" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingUserRoleOpen(null);
+                      setPermissionState({ departments: [] });
+                      setSelectedDept("");
+                      setUserModalTab("authority");
+                    }}
+                    className="px-4 py-2 text-slate-500 text-xs font-bold uppercase tracking-widest hover:text-slate-700 transition-colors"
+                  >
+                    Discard
+                  </button>
+                  <button
+                    onClick={() => handleUpdatePermissions(isEditingUserRoleOpen)}
+                    className="px-6 py-2 bg-slate-900 text-white rounded text-xs font-bold uppercase tracking-widest hover:bg-black transition-all shadow-lg active:scale-[0.98]"
+                  >
+                    Update Authority
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingUserRoleOpen(null);
+                    setPermissionState({ departments: [] });
+                    setSelectedDept("");
+                    setUserModalTab("authority");
+                  }}
+                  className="px-6 py-2 bg-slate-900 hover:bg-black text-white rounded text-xs font-bold uppercase tracking-widest transition-all shadow-md active:scale-[0.98]"
+                >
+                  Close Profile Ledger
+                </button>
+              )}
             </div>
           </div>
         </div>

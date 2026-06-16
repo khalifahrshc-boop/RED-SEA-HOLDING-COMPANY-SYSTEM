@@ -89,7 +89,7 @@ interface InventoryProps {
   company?: any;
 }
 
-export function Inventory({ language, projects, onUpdateProject, assets, setAssets }: InventoryProps) {
+export function Inventory({ language, projects, onUpdateProject, assets, setAssets, company }: InventoryProps) {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
 

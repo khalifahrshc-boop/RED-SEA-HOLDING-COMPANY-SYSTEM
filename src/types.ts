@@ -191,6 +191,11 @@ export interface Invoice {
   discountValue?: number;
   discountAmount?: number;
   type?: 'Sales' | 'Purchase';
+  submittedBy?: {
+    uid: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface QuoteItem {

@@ -911,7 +911,7 @@ function AppContent() {
           />
         );
       case 'settings':
-        return <Settings language={language} company={company} setCompany={setCompany} />;
+        return <Settings language={language} company={company} setCompany={setCompany} invoices={invoices} />;
       case 'equipment':
         return <Equipment language={language} projects={projects} company={company} assets={assets} setAssets={setAssets} />;
       case 'productivity':

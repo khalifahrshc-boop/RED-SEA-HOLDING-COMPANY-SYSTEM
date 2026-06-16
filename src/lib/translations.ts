@@ -46,6 +46,7 @@ export const translations = {
       project_health: "Project Health Index"
     },
     data: {
+      "Submitted by": "تم تقديمه بواسطة",
       "North Delta Bridge": "جسر شمال الدلتا",
       "Red Sea Tourism Hub": "مركز البحر الأحمر السياحي",
       "Marsa Matrouh Coastal": "ساحل مرسى مطروح",
