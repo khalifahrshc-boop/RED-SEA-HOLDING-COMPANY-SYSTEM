@@ -179,16 +179,16 @@ const initialCostSheets: ProjectCostSheet[] = [
 function AppContent() {
   const { user, loading, error } = useAuth();
   const [activeView, setActiveView] = useLocalStorage<View>('ares_activeView', 'dashboard');
-  const [projects, setProjects] = React.useState<Project[]>(initialProjects);
-  const [invoices, setInvoices] = React.useState<Invoice[]>(initialInvoices);
+  const [projects, setProjects] = useFirestoreCollection<Project>('projects', initialProjects);
+  const [invoices, setInvoices] = useFirestoreCollection<Invoice>('invoices', initialInvoices);
   const [costSheets, setCostSheets] = useFirestoreCollection<ProjectCostSheet>('costSheets', initialCostSheets);
-  const [workers, setWorkers] = React.useState<Worker[]>(initialWorkers);
+  const [workers, setWorkers] = useFirestoreCollection<Worker>('workers', initialWorkers);
   const [resources, setResources] = useFirestoreCollection<ProjectResource>('resources', initialResources);
   const [assets, setAssets] = useFirestoreCollection<Asset>('assets', [
     { id: 'A1', referenceNumber: 'EQ-HE-001', name: 'Bulldozer D9R', model: 'Cat D9R', category: 'Heavy Equipment', ownershipType: 'Owned', serialNumber: 'SN-001389', acquisitionDate: '2021-05-12', condition: 'Good', status: 'Active', location: 'East Camp A', value: 150000, projectId: 'P1', quantity: 1, unit: 'Item', accountingApproved: true },
     { id: 'A2', referenceNumber: 'EQ-VH-002', name: 'Transport Bus', model: 'Mercedes Sprinter', category: 'Vehicles', ownershipType: 'Rented', rentalSource: 'Auto Lease Inc.', dailyCost: 200, serialNumber: 'SN-V8829', acquisitionDate: '2023-11-20', condition: 'Mint', status: 'Active', location: 'HQ', value: 45000, quantity: 2, unit: 'Item', accountingApproved: true }
   ]);
-  const [attendanceSheets, setAttendanceSheets] = React.useState<AttendanceSheet[]>([]);
+  const [attendanceSheets, setAttendanceSheets] = useFirestoreCollection<AttendanceSheet>('attendanceSheets', []);
   const [additionalCosts, setAdditionalCosts] = useFirestoreCollection<AdditionalCost>('additionalCosts', [
     {
       id: 'AC-3321',
@@ -337,7 +337,7 @@ function AppContent() {
       dailyOutputs.forEach(doRec => {
         const matchingIdx = updatedProductivity.findIndex(p => p.id === doRec.id);
         const proj = projects.find(p => p.id === doRec.projectId);
-        const projectName = proj ? proj.projectName : 'General Project';
+        const projectName = proj ? proj.name : 'General Project';
 
         const prTaskWorkers = workers.filter(w => w.projectId === doRec.projectId && (doRec.taskId ? w.assignedTaskId === doRec.taskId : true));
         const workerIds = prTaskWorkers.map(w => w.id);
@@ -473,135 +473,6 @@ function AppContent() {
       }
     }
   }, [activeView, dailyOutputs, productivityRecords, projects, workers]);
-
-  const workersRef = React.useRef(workers);
-  React.useEffect(() => {
-    workersRef.current = workers;
-  }, [workers]);
-
-  const invoicesRef = React.useRef(invoices);
-  React.useEffect(() => {
-    invoicesRef.current = invoices;
-  }, [invoices]);
-
-  // Firestore Sync
-  React.useEffect(() => {
-    if (!user) return;
-
-    const unsubProjects = onSnapshot(collection(db, 'projects'), (snap) => {
-      setProjects(snap.docs.map(d => ({ ...convertTimestamps(d.data()), id: d.id } as Project)));
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'projects'));
-
-    const unsubWorkers = onSnapshot(collection(db, 'workers'), (snap) => {
-      setWorkers(snap.docs.map(d => ({ ...convertTimestamps(d.data()), id: d.id } as Worker)));
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'workers'));
-
-    const unsubAttendance = onSnapshot(collection(db, 'attendanceSheets'), (snap) => {
-      setAttendanceSheets(snap.docs.map(d => ({ ...convertTimestamps(d.data()), id: d.id } as AttendanceSheet)));
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'attendanceSheets'));
-
-    const unsubInvoices = onSnapshot(collection(db, 'invoices'), (snap) => {
-      setInvoices(snap.docs.map(d => ({ ...convertTimestamps(d.data()), id: d.id } as Invoice)));
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'invoices'));
-
-    return () => {
-      unsubProjects();
-      unsubWorkers();
-      unsubAttendance();
-      unsubInvoices();
-    };
-  }, [user]);
-
-  const handleSetWorkers = async (action: React.SetStateAction<Worker[]>) => {
-    const currentWorkers = workersRef.current;
-    const nextWorkers = typeof action === 'function' ? action(currentWorkers) : action;
-    
-    // Local update for snappiness
-    setWorkers(nextWorkers);
-
-    // Sync any additions or modifications
-    for (const nw of nextWorkers) {
-      const existing = currentWorkers.find(w => w.id === nw.id);
-      if (!existing || JSON.stringify(existing) !== JSON.stringify(nw)) {
-        try {
-          const { id, ...data } = nw;
-          const cleanData = { ...data };
-          Object.keys(cleanData).forEach(key => {
-            if (cleanData[key] === undefined) {
-              delete cleanData[key];
-            }
-          });
-          await setDoc(doc(db, 'workers', id), cleanData, { merge: true });
-        } catch (e) {
-          console.error("Error setting worker in Firestore:", e);
-        }
-      }
-    }
-
-    // Sync any deletions
-    for (const ew of currentWorkers) {
-      if (!nextWorkers.some(nw => nw.id === ew.id)) {
-        try {
-          await deleteDoc(doc(db, 'workers', ew.id));
-        } catch (e) {
-          console.error("Error deleting worker from Firestore:", e);
-        }
-      }
-    }
-  };
-
-  const handleSetInvoices = async (action: React.SetStateAction<Invoice[]>) => {
-    const currentInvoices = invoicesRef.current;
-    const nextInvoices = typeof action === 'function' ? action(currentInvoices) : action;
-    
-    // Local update for snappiness
-    setInvoices(nextInvoices);
-
-    // Sync any additions or modifications
-    for (const ni of nextInvoices) {
-      const existing = currentInvoices.find(i => i.id === ni.id);
-      if (!existing || JSON.stringify(existing) !== JSON.stringify(ni)) {
-        try {
-          const { id, ...data } = ni;
-          const cleanData = { ...data };
-          Object.keys(cleanData).forEach(key => {
-            if (cleanData[key] === undefined) {
-              delete cleanData[key];
-            }
-          });
-          
-          if (!existing) {
-            cleanData.createdAt = serverTimestamp();
-          } else {
-            delete cleanData.createdAt;
-          }
-          await setDoc(doc(db, 'invoices', id), cleanData, { merge: true });
-        } catch (e) {
-          handleFirestoreError(e, OperationType.UPDATE, `invoices/${ni.id}`);
-        }
-      }
-    }
-
-    // Sync any deletions
-    for (const ei of currentInvoices) {
-      if (!nextInvoices.some(ni => ni.id === ei.id)) {
-        try {
-          await deleteDoc(doc(db, 'invoices', ei.id));
-        } catch (e) {
-          handleFirestoreError(e, OperationType.DELETE, `invoices/${ei.id}`);
-        }
-      }
-    }
-  };
-
-  const handleDeleteSheet = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'attendanceSheets', id));
-      setAttendanceSheets(prev => prev.filter(s => s.id !== id));
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `attendanceSheets/${id}`);
-    }
-  };
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'en' ? 'ar' : 'en');
@@ -745,57 +616,27 @@ function AppContent() {
     }
   }, [workers, user]);
 
-  const handleUpdateProject = async (updatedProject: Project) => {
-    try {
-      const { id, ...data } = updatedProject;
-      const cleanData = { ...data };
-      Object.keys(cleanData).forEach(key => {
-        if (cleanData[key] === undefined) {
-          delete cleanData[key];
-        }
-      });
-      
-      delete cleanData.createdAt;
-      
-      await setDoc(doc(db, 'projects', id), cleanData, { merge: true });
-      
-      const isNewCompletion = updatedProject.status === 'Completed' && projects.find(p => p.id === updatedProject.id)?.status !== 'Completed';
-      if (isNewCompletion) {
-        createDraftInvoice(updatedProject);
-      }
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `projects/${updatedProject.id}`);
+  const handleUpdateProject = (updatedProject: Project) => {
+    const isNewCompletion = updatedProject.status === 'Completed' && projects.find(p => p.id === updatedProject.id)?.status !== 'Completed';
+    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+    if (isNewCompletion) {
+      createDraftInvoice(updatedProject);
     }
   };
 
-  const handleCreateProject = async (newProject: Project) => {
-    try {
-      const { id, ...data } = newProject;
-      const cleanData: any = {
-        ...data,
-        createdAt: serverTimestamp()
-      };
-      Object.keys(cleanData).forEach(key => {
-        if (cleanData[key] === undefined) {
-          delete cleanData[key];
-        }
-      });
-      await setDoc(doc(db, 'projects', id), cleanData);
-      
-      if (newProject.status === 'Completed') {
-        createDraftInvoice(newProject);
-      }
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, `projects/${newProject.id}`);
+  const handleCreateProject = (newProject: Project) => {
+    setProjects(prev => [newProject, ...prev]);
+    if (newProject.status === 'Completed') {
+      createDraftInvoice(newProject);
     }
   };
 
-  const handleDeleteProject = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'projects', id));
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `projects/${id}`);
-    }
+  const handleDeleteProject = (id: string) => {
+    setProjects(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleDeleteSheet = (id: string) => {
+    setAttendanceSheets(prev => prev.filter(s => s.id !== id));
   };
 
   const handleDeleteExpenditure = (id: string) => {
@@ -822,7 +663,7 @@ function AppContent() {
             onCreateProject={handleCreateProject}
             onDeleteProject={handleDeleteProject}
             workers={workers}
-            setWorkers={handleSetWorkers}
+            setWorkers={setWorkers}
             resources={resources}
             setResources={setResources}
             language={language}
@@ -836,14 +677,14 @@ function AppContent() {
       case 'payroll':
         return <PayrollManager workers={workers} projects={projects} company={company} language={language} />;
       case 'hr':
-        return <Workforce projects={projects} workers={workers} setWorkers={handleSetWorkers} language={language} company={company} />;
+        return <Workforce projects={projects} workers={workers} setWorkers={setWorkers} language={language} company={company} />;
       case 'accommodation':
         return <Accommodation language={language} company={company} />;
       case 'finance':
         return (
           <Finance 
             invoices={invoices} 
-            setInvoices={handleSetInvoices} 
+            setInvoices={setInvoices} 
             costSheets={costSheets}
             setCostSheets={setCostSheets}
             workers={workers}
