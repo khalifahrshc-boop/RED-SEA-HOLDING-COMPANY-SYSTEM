@@ -1083,198 +1083,208 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800 font-mono tracking-tight uppercase">Equipment & Assets</h2>
-          <p className="text-sm text-slate-500 mt-1">Manage physical resources and company assets</p>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6 border-b border-slate-100">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-extrabold text-slate-900 font-display tracking-tight uppercase">Equipment & Assets</h2>
+          <p className="text-sm text-slate-500 font-medium">Manage physical resources and company assets</p>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
           <select 
             value={activeWarehouse} 
             onChange={(e) => setActiveWarehouse(e.target.value)}
-            className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-700 rounded-md px-3 py-2 text-sm font-bold uppercase tracking-wide outline-none focus:ring-1 focus:ring-red-500"
+            className="bg-white border border-slate-200 text-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold uppercase tracking-wide outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all shadow-sm grow sm:grow-0"
           >
             <option value="MAIN">🏢 Main Company Warehouse</option>
             {projects.map(p => <option key={p.id} value={p.id}>🏗️ {p.name} Warehouse</option>)}
           </select>
           
-          {activeTab === 'inventory' ? (
-            <div className="flex items-center gap-2">
-            {selectedAssets.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
-              <button onClick={handlePrintSelected} className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-red-100 transition-colors">
-                <Printer className="w-4 h-4" /> Print Selected
-              </button>
-            )}
-            {hasPermission('internal_admin', 'equipment', 'export') && (
+          <div className="flex flex-wrap items-center gap-2">
+            {activeTab === 'inventory' ? (
               <>
-                <button onClick={handleExportPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-                  <FileText className="w-4 h-4" /> PDF
-                </button>
-                <button onClick={handleExportExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-                  <Download className="w-4 h-4" /> Excel
-                </button>
+                {selectedAssets.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
+                  <button onClick={handlePrintSelected} className="flex items-center justify-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all active:scale-[0.98]">
+                    <Printer className="w-3.5 h-3.5" /> Print Selected
+                  </button>
+                )}
+                {hasPermission('internal_admin', 'equipment', 'export') && (
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                    <button onClick={handleExportPDF} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-md text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 shadow-sm">
+                      <FileText className="w-3.5 h-3.5" /> PDF
+                    </button>
+                    <button onClick={handleExportExcel} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-md text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 shadow-sm">
+                      <Download className="w-3.5 h-3.5" /> Excel
+                    </button>
+                  </div>
+                )}
+                {hasPermission('internal_admin', 'equipment', 'create') && (
+                  <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all active:scale-[0.98] grow sm:grow-0">
+                    <Plus className="w-4 h-4" /> New Asset
+                  </button>
+                )}
               </>
-            )}
-            {hasPermission('internal_admin', 'equipment', 'create') && (
-              <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition">
-                <Plus className="w-4 h-4" /> New Asset
-              </button>
+            ) : activeTab === 'dispatch' ? (
+              <>
+                 {selectedReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
+                  <button onClick={handlePrintSelectedDispatch} className="flex items-center justify-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all">
+                    <Printer className="w-3.5 h-3.5" /> Print Selected ({selectedReports.size})
+                  </button>
+                )}
+                {hasPermission('internal_admin', 'equipment', 'export') && (
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                    <button onClick={handleExportDispatchPDF} className="p-1.5 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 shadow-sm" title="Export PDF">
+                      <FileText className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={handleExportDispatchExcel} className="p-1.5 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 shadow-sm" title="Export Excel">
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+                {hasPermission('internal_admin', 'equipment', 'dispatch') && (
+                  <button onClick={() => { setEditingReport(null); setIsDispatchModalOpen(true); }} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all active:scale-[0.98] grow sm:grow-0">
+                    <Plus className="w-4 h-4" /> New Dispatch
+                  </button>
+                )}
+              </>
+            ) : activeTab === 'return' ? (
+              <>
+                {selectedReturnReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
+                  <button onClick={handlePrintSelectedReturn} className="flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all">
+                    <Printer className="w-3.5 h-3.5" /> Print Selected ({selectedReturnReports.size})
+                  </button>
+                )}
+                {hasPermission('internal_admin', 'equipment', 'export') && (
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                    <button onClick={handleExportReturnPDF} className="p-1.5 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 shadow-sm" title="Export PDF">
+                      <FileText className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={handleExportReturnExcel} className="p-1.5 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 shadow-sm" title="Export Excel">
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+                {hasPermission('internal_admin', 'equipment', 'return') && (
+                  <button onClick={() => { setEditingReturnReport(null); setIsReturnModalOpen(true); }} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-[0.98] grow sm:grow-0">
+                    <Plus className="w-4 h-4" /> Receive Return
+                  </button>
+                )}
+              </>
+            ) : activeTab === 'destruction' ? (
+              <>
+                {selectedDestructionReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
+                  <button onClick={handlePrintSelectedDestruction} className="flex items-center justify-center gap-2 px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-rose-100 transition-all">
+                    <Printer className="w-3.5 h-3.5" /> Print Selected ({selectedDestructionReports.size})
+                  </button>
+                )}
+                {hasPermission('internal_admin', 'equipment', 'export') && (
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                    <button onClick={handleExportDestructionPDF} className="p-1.5 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 shadow-sm" title="Export PDF">
+                      <FileText className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={handleExportDestructionExcel} className="p-1.5 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 shadow-sm" title="Export Excel">
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+                {hasPermission('internal_admin', 'equipment', 'destruction') && (
+                  <button onClick={() => setIsDestructionModalOpen(true)} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-rose-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-rose-600/20 hover:bg-rose-700 transition-all active:scale-[0.98] grow sm:grow-0">
+                    <Plus className="w-4 h-4" /> Destruction
+                  </button>
+                )}
+              </>
+            ) : (
+                 activeWarehouse !== 'MAIN' && hasPermission('internal_admin', 'equipment', 'manage') && (
+                    <button onClick={() => setIsRequestModalOpen(true)} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-[0.98] grow sm:grow-0">
+                      <Plus className="w-4 h-4" /> Request Material
+                    </button>
+                 )
             )}
           </div>
-        ) : activeTab === 'dispatch' ? (
-          <div className="flex items-center gap-2">
-             {selectedReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
-              <button onClick={handlePrintSelectedDispatch} className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-red-100 transition-colors">
-                <Printer className="w-4 h-4" /> Print Selected ({selectedReports.size})
-              </button>
-            )}
-            {hasPermission('internal_admin', 'equipment', 'export') && (
-              <>
-                <button onClick={handleExportDispatchPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-                  <FileText className="w-4 h-4" /> PDF
-                </button>
-                <button onClick={handleExportDispatchExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-                  <Download className="w-4 h-4" /> Excel
-                </button>
-              </>
-            )}
-            {hasPermission('internal_admin', 'equipment', 'dispatch') && (
-              <button onClick={() => { setEditingReport(null); setIsDispatchModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-red-700 transition">
-                <Plus className="w-4 h-4" /> New Dispatch Report
-              </button>
-            )}
-          </div>
-        ) : activeTab === 'return' ? (
-          <div className="flex items-center gap-2">
-            {selectedReturnReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
-              <button onClick={handlePrintSelectedReturn} className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-emerald-100 transition-colors">
-                <Printer className="w-4 h-4" /> Print Selected ({selectedReturnReports.size})
-              </button>
-            )}
-            {hasPermission('internal_admin', 'equipment', 'export') && (
-              <>
-                <button onClick={handleExportReturnPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-                  <FileText className="w-4 h-4" /> PDF
-                </button>
-                <button onClick={handleExportReturnExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-                  <Download className="w-4 h-4" /> Excel
-                </button>
-              </>
-            )}
-            {hasPermission('internal_admin', 'equipment', 'return') && (
-              <button onClick={() => { setEditingReturnReport(null); setIsReturnModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-emerald-700 transition">
-                <Plus className="w-4 h-4" /> Receive Return
-              </button>
-            )}
-          </div>
-        ) : activeTab === 'destruction' ? (
-          <div className="flex items-center gap-2">
-            {selectedDestructionReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
-              <button onClick={handlePrintSelectedDestruction} className="flex items-center gap-2 px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-rose-100 transition-colors">
-                <Printer className="w-4 h-4" /> Print Selected ({selectedDestructionReports.size})
-              </button>
-            )}
-            {hasPermission('internal_admin', 'equipment', 'export') && (
-              <>
-                <button onClick={handleExportDestructionPDF} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-                  <FileText className="w-4 h-4" /> PDF
-                </button>
-                <button onClick={handleExportDestructionExcel} className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
-                  <Download className="w-4 h-4" /> Excel
-                </button>
-              </>
-            )}
-            {hasPermission('internal_admin', 'equipment', 'destruction') && (
-              <button onClick={() => setIsDestructionModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-rose-700 transition">
-                <Plus className="w-4 h-4" /> Declare Destruction
-              </button>
-            )}
-          </div>
-        ) : (
-           <div className="flex items-center gap-2">
-             {activeWarehouse !== 'MAIN' && hasPermission('internal_admin', 'equipment', 'manage') && (
-                <button onClick={() => setIsRequestModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-blue-700 transition">
-                  <Plus className="w-4 h-4" /> Request Material
-                </button>
-             )}
-           </div>
-        )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 border-b border-slate-200 mb-6 w-full overflow-x-auto">
+      <div className="bg-white p-1 rounded-xl border border-slate-200 shadow-sm flex items-center gap-1 overflow-x-auto no-scrollbar scroll-smooth">
         <button
           onClick={() => setActiveTab('inventory')}
           className={cn(
-            "px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors border-b-2 whitespace-nowrap",
-            activeTab === 'inventory' ? "border-red-600 text-red-600" : "border-transparent text-slate-500 hover:text-slate-700"
+            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
+            activeTab === 'inventory' 
+              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           )}
         >
-          Assets Inventory
+          Inventory
         </button>
         <button
           onClick={() => setActiveTab('requests')}
           className={cn(
-            "px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors border-b-2 whitespace-nowrap",
-            activeTab === 'requests' ? "border-red-600 text-red-600" : "border-transparent text-slate-500 hover:text-slate-700"
+            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
+            activeTab === 'requests' 
+              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           )}
         >
-          Material Requests
+          Requests
         </button>
         <button
           onClick={() => setActiveTab('dispatch')}
           className={cn(
-            "px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors border-b-2 whitespace-nowrap",
-            activeTab === 'dispatch' ? "border-red-600 text-red-600" : "border-transparent text-slate-500 hover:text-slate-700"
+            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
+            activeTab === 'dispatch' 
+              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           )}
         >
-          Dispatch Reports
+          Dispatches
         </button>
         <button
           onClick={() => setActiveTab('return')}
           className={cn(
-            "px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors border-b-2 whitespace-nowrap",
-            activeTab === 'return' ? "border-red-600 text-red-600" : "border-transparent text-slate-500 hover:text-slate-700"
+            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
+            activeTab === 'return' 
+              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           )}
         >
-          Return Reports
+          Returns
         </button>
         <button
           onClick={() => setActiveTab('destruction')}
           className={cn(
-            "px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors border-b-2 whitespace-nowrap",
-            activeTab === 'destruction' ? "border-red-600 text-red-600" : "border-transparent text-slate-500 hover:text-slate-700"
+            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
+            activeTab === 'destruction' 
+              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
+              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           )}
         >
-          Destruction Reports
+          Destruction
         </button>
       </div>
 
       {activeTab === 'inventory' ? (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-        <div className="glass-panel p-4 bg-white border border-slate-200 rounded-lg">
-           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Equipment</h3>
-           <p className="text-2xl font-mono font-bold text-slate-800">{assets.length}</p>
-        </div>
-        {['Heavy Equipment', 'Vehicles', 'Tools', 'IT Assets', 'Other'].map(cat => {
-            const count = assets.filter(a => a.category === cat).length;
-            return (
-               <div key={cat} className="glass-panel p-4 bg-white border border-slate-200 rounded-lg">
-                 <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{cat}</h3>
-                 <p className="text-2xl font-mono font-bold text-slate-800">{count}</p>
-               </div>
-            );
-        })}
-      </div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Assets</h3>
+              <p className="text-2xl font-bold text-slate-900 font-display tracking-tight">{assets.length}</p>
+            </div>
+            {['Heavy Equipment', 'Vehicles', 'Tools', 'IT Assets', 'Other'].map(cat => {
+                const count = assets.filter(a => a.category === cat).length;
+                return (
+                  <div key={cat} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 truncate" title={cat}>{cat}</h3>
+                    <p className="text-2xl font-bold text-slate-900 font-display tracking-tight">{count}</p>
+                  </div>
+                );
+            })}
+          </div>
 
-      <div className="bg-white border rounded-lg overflow-auto resize-y shadow-sm">
-        <div className="overflow-x-auto w-full min-w-full"><div className="min-w-max">
-          <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="px-6 py-4 w-12">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[1000px]">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-200">
+                    <th className="px-6 py-4 w-12 text-center">
                 <input 
                   type="checkbox" 
                   className="rounded border-slate-300 text-red-600 focus:ring-red-500"
@@ -1328,15 +1338,15 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   <span className="font-mono font-medium text-slate-900">{asset.quantity !== undefined ? asset.quantity : 1}</span>
                   <span className="text-xs text-slate-500 ml-1">{asset.unit || 'Item'}</span>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${asset.condition === 'Mint' ? 'bg-emerald-500' : asset.condition === 'Good' ? 'bg-red-500' : asset.condition === 'Fair' ? 'bg-amber-500' : 'bg-red-500'}`}></span>
-                      <span className="text-sm font-medium text-slate-700">{asset.condition}</span>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${asset.condition === 'Mint' ? 'bg-emerald-500' : asset.condition === 'Good' ? 'bg-blue-500' : asset.condition === 'Fair' ? 'bg-amber-500' : 'bg-red-500'}`}></span>
+                        <span className="text-xs font-semibold text-slate-700">{asset.condition}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">{asset.location}</span>
                     </div>
-                    <span className="text-xs text-slate-500">{asset.location}</span>
-                  </div>
-                </td>
+                  </td>
                 <td className="px-6 py-4">
                   {asset.accountingApproved !== false ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 w-max border border-emerald-100">Approved</span>
@@ -1397,15 +1407,15 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
             ))}
           </tbody>
         </table>
-        </div></div>
       </div>
-      </>
-      ) : activeTab === 'requests' ? (
-      <>
-        <div className="bg-white border border-slate-200 rounded-lg overflow-auto shadow-sm">
-           <table className="w-full text-left border-collapse">
-             <thead>
-               <tr className="bg-slate-50 border-b border-slate-200">
+    </div>
+  </div>
+) : activeTab === 'requests' ? (
+  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+    <div className="overflow-x-auto no-scrollbar">
+      <table className="w-full text-left border-collapse min-w-[1000px]">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200">
                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Project ID</th>
                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Asset Info</th>
@@ -1464,25 +1474,24 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                   </tr>
                   )
                })}
-               {visibleRequests.length === 0 && (
-                 <tr>
-                   <td colSpan={7} className="px-6 py-8 text-center text-slate-500 text-sm">
-                     No requests found.
-                   </td>
-                 </tr>
-               )}
-             </tbody>
-           </table>
+              {visibleRequests.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500 text-sm">
+                    No requests found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      </>
-      ) : activeTab === 'dispatch' ? (
-      <>
-        <div className="bg-white border rounded-lg overflow-auto resize-y shadow-sm">
-          <div className="overflow-x-auto w-full min-w-full"><div className="min-w-max">
-            <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-4 w-12">
+      </div>
+) : activeTab === 'dispatch' ? (
+  <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+    <div className="overflow-x-auto no-scrollbar">
+      <table className="w-full text-left border-collapse min-w-[1000px]">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200">
+                  <th className="px-6 py-4 w-12 text-center">
                   <input 
                     type="checkbox" 
                     className="rounded border-slate-300 text-red-600 focus:ring-red-500"
@@ -1561,17 +1570,15 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
               )}
             </tbody>
           </table>
-          </div></div>
+          </div>
         </div>
-      </>
       ) : activeTab === 'return' ? (
-      <>
-        <div className="bg-white border rounded-lg overflow-auto resize-y shadow-sm">
-          <div className="overflow-x-auto w-full min-w-full"><div className="min-w-max">
-            <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="w-12 px-6 py-4">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200">
+                  <th className="px-6 py-4 w-12 text-center">
                   <input 
                     type="checkbox" 
                     className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
@@ -1653,17 +1660,15 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
               )}
             </tbody>
           </table>
-          </div></div>
+          </div>
         </div>
-      </>
       ) : activeTab === 'destruction' ? (
-      <>
-        <div className="bg-white border rounded-lg overflow-auto resize-y shadow-sm">
-          <div className="overflow-x-auto w-full min-w-full"><div className="min-w-max">
-            <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="w-12 px-6 py-4">
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200">
+                  <th className="px-6 py-4 w-12 text-center">
                   <input 
                     type="checkbox" 
                     className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
@@ -1686,11 +1691,11 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
             </thead>
             <tbody className="divide-y divide-slate-100">
               {destructionReports.map((report) => (
-                <tr key={report.id} className={`hover:bg-slate-50/50 block-row ${selectedDestructionReports.has(report.id) ? 'bg-rose-50/30' : ''}`}>
-                  <td className="px-6 py-4">
+                <tr key={report.id} className={cn("hover:bg-slate-50/50 transition-colors", selectedDestructionReports.has(report.id) && "bg-rose-50/30")}>
+                  <td className="px-6 py-4 text-center">
                     <input 
                       type="checkbox" 
-                      className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                      className="rounded border-slate-300 text-rose-600 focus:ring-rose-500 w-4 h-4"
                       checked={selectedDestructionReports.has(report.id)}
                       onChange={() => {
                           const newSet = new Set(selectedDestructionReports);
@@ -1720,14 +1725,14 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
                     </div>
                   </td>
                    <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex justify-end items-center gap-1">
                       {hasPermission('internal_admin', 'equipment', 'print') && (
-                        <button onClick={() => handlePrintDestructionReport(report)} className="p-2 text-slate-400 hover:text-rose-600 transition" title="Print Destruction Certificate">
+                        <button onClick={() => handlePrintDestructionReport(report)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Print Destruction Certificate">
                           <Printer className="w-4 h-4" />
                         </button>
                       )}
                       {hasPermission('internal_admin', 'equipment', 'delete') && (
-                        <button onClick={() => handleDeleteDestruction(report.id)} className="p-2 text-slate-400 hover:text-red-600 transition" title="Delete">
+                        <button onClick={() => handleDeleteDestruction(report.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
@@ -1744,9 +1749,8 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
               )}
             </tbody>
           </table>
-          </div></div>
+          </div>
         </div>
-      </>
       ) : null}
 
       {isModalOpen && (
