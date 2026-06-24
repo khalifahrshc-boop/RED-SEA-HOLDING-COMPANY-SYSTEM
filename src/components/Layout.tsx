@@ -25,7 +25,9 @@ import {
   LayoutGrid,
   Mail,
   MessageSquare,
-  FileText
+  FileText,
+  ChevronLeft,
+  PanelLeftOpen
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { View } from '../types';
@@ -81,6 +83,7 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
   const [viewFilter, setViewFilter] = React.useState<'Views'|'Reports'>('Views');
   const [subFilter, setSubFilter] = React.useState<'Total'|'Sections'|'Metrics'>('Total');
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [activeCenter, setActiveCenter] = React.useState<'notifications' | 'messages' | null>(null);
   const [notifications, setNotifications] = React.useState<AppNotification[]>([]);
   const prevUnreadIdsRef = React.useRef<Set<string>>(new Set());
@@ -217,81 +220,83 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
     )} dir={isRtl ? "rtl" : "ltr"}>
       
       {/* Top Header */}
-      <header className="h-[80px] bg-white border-t-4 border-t-red-600 flex items-center justify-between px-6 lg:px-10 shrink-0 shadow-sm relative z-20 print:hidden">
-        <div className="flex items-center gap-2 lg:gap-3 cursor-pointer" onClick={() => onViewChange('dashboard')}>
+      <header className="h-[80px] bg-white/80 backdrop-blur-md border-b border-slate-200/60 flex items-center justify-between px-6 lg:px-10 shrink-0 shadow-sm relative z-20 print:hidden">
+        <div className="flex items-center gap-6 cursor-pointer group" onClick={() => onViewChange('dashboard')}>
           {company?.logo && (
             <img 
               src={company.logo} 
               alt="Company Logo" 
-              className="h-9 w-auto object-contain shrink-0" 
+              className="h-10 w-auto object-contain transition-transform group-hover:scale-105" 
               referrerPolicy="no-referrer"
             />
           )}
-          <span className="text-xl lg:text-3xl font-bold text-red-600 tracking-tight">REDSEA</span>
-          <span className="text-xl lg:text-3xl font-light text-slate-400 tracking-widest hidden sm:inline-block">| RETAIL</span>
+          <div className="flex flex-col border-l border-slate-200 pl-6">
+            <span className="text-xl lg:text-3xl font-black text-red-600 tracking-tighter leading-none group-hover:text-red-700 transition-colors">REDSEA</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] leading-none mt-1">Holding Company</span>
+          </div>
         </div>
         
-        {/* Department/Role Indicator */}
-        <div className="hidden lg:flex px-4 py-1.5 bg-slate-50 border border-slate-100 rounded text-[10px] items-center gap-2">
-           <Building2 className="w-3 h-3 text-slate-400" />
-           <span className="font-bold text-slate-500 uppercase tracking-widest">{userData?.department || 'Administrator'} UNIT</span>
-        </div>
-        
-          <div className="hidden lg:flex items-center gap-10">
-            <div className="flex items-center gap-4 text-slate-400">
-      <button 
-        onClick={() => setActiveCenter(activeCenter === 'messages' ? null : 'messages')}
-        className={cn("p-2 transition-colors relative", activeCenter === 'messages' ? "text-red-600 bg-red-50 rounded-lg" : "hover:text-red-500")} 
-        title="Messages"
-      >
-        <MessageSquare className="w-5 h-5" />
-        {notifications.filter(n => !n.read && (n.type === 'Request' || n.type === 'Alert' || n.type === 'Message')).length > 0 && (
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        )}
-      </button>
-      <button 
-        onClick={() => setActiveCenter(activeCenter === 'notifications' ? null : 'notifications')}
-        className={cn("p-2 transition-colors relative", activeCenter === 'notifications' ? "text-red-600 bg-red-50 rounded-lg" : "hover:text-red-500")} 
-        title="Notifications"
-      >
-        <Bell className="w-5 h-5" />
-        {notifications.filter(n => !n.read && n.type !== 'Request' && n.type !== 'Alert' && n.type !== 'Message').length > 0 && (
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        )}
-      </button>
+        {/* Dynamic Search & Actions */}
+        <div className="hidden lg:flex items-center gap-12">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-1 group">
+               <Building2 className="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors" />
+               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{userData?.department || 'Administration'}</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-8 text-slate-400">
+            <div className="flex items-center gap-1 h-10 px-1 bg-slate-50 rounded-xl border border-slate-100">
+              <button 
+                onClick={() => setActiveCenter(activeCenter === 'messages' ? null : 'messages')}
+                className={cn("p-2 transition-all relative rounded-lg", activeCenter === 'messages' ? "text-red-600 bg-white shadow-sm" : "hover:text-red-500")} 
+                title="Messages"
+              >
+                <MessageSquare className="w-5 h-5" />
+                {notifications.filter(n => !n.read && (n.type === 'Request' || n.type === 'Alert' || n.type === 'Message')).length > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                )}
+              </button>
+              <button 
+                onClick={() => setActiveCenter(activeCenter === 'notifications' ? null : 'notifications')}
+                className={cn("p-2 transition-all relative rounded-lg", activeCenter === 'notifications' ? "text-red-600 bg-white shadow-sm" : "hover:text-red-500")} 
+                title="Notifications"
+              >
+                <Bell className="w-5 h-5" />
+                {notifications.filter(n => !n.read && n.type !== 'Request' && n.type !== 'Alert' && n.type !== 'Message').length > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                )}
+              </button>
             </div>
 
-          <div className="flex items-center gap-6 text-sm font-medium text-slate-400">
-            <button 
-              className={cn("pb-2 px-1 relative top-[1px]", language === 'en' ? "text-red-500 border-b-2 border-red-500 font-bold" : "hover:text-slate-600 transition-colors")}
-              onClick={() => language !== 'en' && onLanguageToggle()}
-            >
-              En
-            </button>
-            <button 
-              className={cn("pb-2 px-1 relative top-[1px]", language === 'ar' ? "text-red-500 border-b-2 border-red-500 font-bold" : "hover:text-slate-600 transition-colors")}
-              onClick={() => language !== 'ar' && onLanguageToggle()}
-            >
-              Ar
-            </button>
-          </div>
-          
-          <div className="w-[48px] h-[48px] bg-red-600 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] cursor-pointer" onClick={() => onViewChange('dashboard')}>
-            <LayoutGrid className="w-5 h-5" />
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-slate-200 rounded-full overflow-hidden relative border border-slate-200">
-              <img src="https://ui-avatars.com/api/?name=User&background=f1f5f9&color=64748b" alt="User" className="w-full h-full object-cover" />
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></div>
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
+              <button 
+                className={cn("px-3 py-1.5 rounded-lg text-xs font-bold transition-all", language === 'en' ? "bg-white text-red-600 shadow-sm" : "hover:text-slate-600 font-bold")}
+                onClick={() => language !== 'en' && onLanguageToggle()}
+              >
+                En
+              </button>
+              <button 
+                className={cn("px-3 py-1.5 rounded-lg text-xs font-bold transition-all", language === 'ar' ? "bg-white text-red-600 shadow-sm" : "hover:text-slate-600 font-bold")}
+                onClick={() => language !== 'ar' && onLanguageToggle()}
+              >
+                Ar
+              </button>
             </div>
-            <div className="hidden sm:block text-sm">
-              <span className="text-slate-400 block text-xs">Welcome</span>
-              <span className="text-slate-700 font-medium block leading-tight">{userData?.name || 'Administrator'}</span>
+            
+            <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
+              <div className="flex flex-col items-end">
+                <span className="text-slate-900 font-bold text-sm leading-none">{userData?.name || 'User Name'}</span>
+                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-1">{userData?.role || 'Guest'}</span>
+              </div>
+              <div className="w-12 h-12 bg-slate-900 rounded-2xl overflow-hidden relative border border-slate-800 shadow-lg shadow-slate-200 group cursor-pointer">
+                <img src={`https://ui-avatars.com/api/?name=${userData?.name || 'User'}&background=0f172a&color=fff`} alt="User" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/20 transition-colors"></div>
+              </div>
+              <button onClick={logOut} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Log Out">
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
-            <button onClick={logOut} className="ml-2 p-2 text-slate-400 hover:text-red-600 transition-colors" title="Log Out">
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
         </div>
         
@@ -305,108 +310,201 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
       </header>
 
       {/* Main Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Sidebar */}
-        <aside className="hidden lg:flex flex-col w-80 bg-slate-50/50 p-8 shrink-0 border-r border-slate-200/60 overflow-y-auto print:hidden">
+        <motion.aside 
+          initial={false}
+          animate={{ 
+            width: isSidebarCollapsed ? '0px' : '288px',
+            opacity: isSidebarCollapsed ? 0 : 1
+          }}
+          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          className={cn(
+            "hidden lg:flex flex-col h-full bg-white border-r border-slate-200/60 overflow-hidden print:hidden relative z-30",
+            isSidebarCollapsed && "border-none"
+          )}
+        >
+          {/* Collapse Toggle Button (Attached to sidebar) */}
+          <button 
+            onClick={() => setIsSidebarCollapsed(true)}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-12 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm hover:bg-slate-50 transition-colors z-50 group"
+          >
+            <ChevronLeft className="w-4 h-4 text-slate-400 group-hover:text-red-600 transition-colors" />
+          </button>
           
-          {/* Red Highlights / Indicators */}
-          <div className="space-y-6 mb-8">
-            <div className="flex gap-4 text-xs font-medium text-slate-400 pl-2">
-              <span onClick={() => setTimeFilter('Day')} className={cn("cursor-pointer transition-colors", timeFilter === 'Day' ? "text-red-500 relative before:content-[''] before:absolute before:bottom-[-4px] before:left-0 before:w-full before:h-[2px] before:bg-red-500" : "hover:text-slate-600")}>Day</span>
-              <span onClick={() => setTimeFilter('Week')} className={cn("cursor-pointer transition-colors", timeFilter === 'Week' ? "text-red-500 relative before:content-[''] before:absolute before:bottom-[-4px] before:left-0 before:w-full before:h-[2px] before:bg-red-500" : "hover:text-slate-600")}>Week</span>
-              <span onClick={() => setTimeFilter('Month')} className={cn("cursor-pointer transition-colors", timeFilter === 'Month' ? "text-red-500 relative before:content-[''] before:absolute before:bottom-[-4px] before:left-0 before:w-full before:h-[2px] before:bg-red-500" : "hover:text-slate-600")}>Month</span>
-              <span onClick={() => setTimeFilter('Year')} className={cn("cursor-pointer transition-colors", timeFilter === 'Year' ? "text-red-500 relative before:content-[''] before:absolute before:bottom-[-4px] before:left-0 before:w-full before:h-[2px] before:bg-red-500" : "hover:text-slate-600")}>Year</span>
-            </div>
-            
-            <div className="bg-red-600 text-white p-4 rounded bg-gradient-to-br from-red-500 to-red-700 shadow-[0_8px_20px_-6px_rgba(220,38,38,0.5)] flex items-center justify-between">
-               <div>
-                 <div className="text-2xl font-bold leading-none tracking-tight">{dateTop}</div>
-                 <div className="text-[10px] uppercase tracking-widest opacity-80 mt-1">{dateBottom}</div>
-               </div>
-               <CalendarCheck className="w-6 h-6 opacity-80" />
-            </div>
-
-            <div className="flex gap-4 text-xs font-medium text-slate-400 pl-2 mt-8">
-              <span onClick={() => setViewFilter('Views')} className={cn("cursor-pointer transition-colors", viewFilter === 'Views' ? "text-red-500 relative before:content-[''] before:absolute before:bottom-[-4px] before:left-0 before:w-full before:h-[2px] before:bg-red-500" : "hover:text-slate-600")}>Views</span>
-              <span onClick={() => setViewFilter('Reports')} className={cn("cursor-pointer transition-colors", viewFilter === 'Reports' ? "text-red-500 relative before:content-[''] before:absolute before:bottom-[-4px] before:left-0 before:w-full before:h-[2px] before:bg-red-500" : "hover:text-slate-600")}>Reports</span>
-            </div>
-            
-            <div className="bg-red-600 text-white p-4 rounded bg-gradient-to-r from-red-600 to-red-600 shadow-[0_8px_20px_-6px_rgba(220,38,38,0.5)] flex items-center gap-4 text-sm font-medium">
-              <span onClick={() => setSubFilter('Total')} className={cn("cursor-pointer", subFilter === 'Total' ? "relative before:content-[''] before:absolute before:bottom-[-10px] before:left-1/2 before:-translate-x-1/2 before:w-1 before:h-1 before:bg-white before:rounded-full" : "opacity-70 hover:opacity-100")}>Total</span>
-              <span onClick={() => setSubFilter('Sections')} className={cn("cursor-pointer", subFilter === 'Sections' ? "relative before:content-[''] before:absolute before:bottom-[-10px] before:left-1/2 before:-translate-x-1/2 before:w-1 before:h-1 before:bg-white before:rounded-full" : "opacity-70 hover:opacity-100")}>Sections</span>
-              <span onClick={() => setSubFilter('Metrics')} className={cn("cursor-pointer", subFilter === 'Metrics' ? "relative before:content-[''] before:absolute before:bottom-[-10px] before:left-1/2 before:-translate-x-1/2 before:w-1 before:h-1 before:bg-white before:rounded-full" : "opacity-70 hover:opacity-100")}>Metrics</span>
-            </div>
-          </div>
-
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pl-2">
-            Modules / Categories
-          </div>
-
-          <div className="relative mb-6">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text" 
-              placeholder="Search module" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-3 text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-sm"
-            />
-          </div>
-
-          <nav className="flex-1 space-y-2">
-            {CATEGORIES.map((category) => {
-              const categoryItems = navItems.filter(item => category.views.includes(item.id));
-              if (categoryItems.length === 0) return null;
-
-              const isExpanded = expandedCategories[category.title];
-
-              return (
-                <div key={category.title} className="space-y-1">
-                  <button
-                    onClick={() => toggleCategory(category.title)}
-                    className="w-full flex items-center justify-between px-4 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors"
-                  >
-                    {category.title}
-                    <span className="text-slate-300">{isExpanded ? '−' : '+'}</span>
-                  </button>
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        {categoryItems.map((item, index) => {
-                          const isActive = activeView === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => onViewChange(item.id as View)}
-                              title={item.label}
-                              className={cn(
-                                "w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-all mb-1",
-                                isActive 
-                                  ? "bg-white border-l-2 border-red-500 text-slate-800 font-bold shadow-sm" 
-                                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
-                              )}
-                            >
-                              <div className="flex items-center gap-3 pr-2 truncate">
-                                <item.icon className="w-4 h-4 shrink-0 opacity-70" />
-                                <span className="truncate">{item.label}</span>
-                              </div>
-                              {isActive && <div className="w-1.5 h-1.5 bg-red-600 shrink-0 rounded-full shadow-[0_0_8px_rgba(220,38,38,0.8)]" />}
-                            </button>
-                          );
-                        })}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+          <div className="flex-1 overflow-y-auto px-4 py-6 modern-scrollbar relative z-10">
+            {/* Quick Summary / Status - Corporate Style */}
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{timeFilter} ANALYTICS</span>
+                <div className="flex gap-1 p-0.5 bg-slate-100 rounded-lg border border-slate-200/50">
+                  {['Day', 'Week', 'Month'].map((f) => (
+                    <button 
+                      key={f}
+                      onClick={() => setTimeFilter(f as any)}
+                      className={cn(
+                        "px-2 py-1 rounded-md text-[9px] font-bold transition-all",
+                        timeFilter === f ? "bg-white text-red-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                      )}
+                    >
+                      {f[0]}
+                    </button>
+                  ))}
                 </div>
-              );
-            })}
-          </nav>
-        </aside>
+              </div>
+              
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 relative overflow-hidden group transition-all hover:border-red-500/30">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-red-600/5 rounded-full blur-2xl -mr-12 -mt-12 group-hover:bg-red-600/10 transition-colors"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center">
+                      <CalendarCheck className="w-4 h-4 text-red-500" />
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">{dateBottom}</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 leading-tight tracking-tight mt-3">{dateTop}</h3>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Performance</span>
+                      <span className="text-[10px] font-mono font-bold text-red-600">65%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: '65%' }}
+                        className="bg-gradient-to-r from-red-600 to-red-500 h-full rounded-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <nav className="space-y-6">
+              <div className="px-2">
+                <div className="relative group">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-red-500 transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="Search systems..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/10 focus:border-red-500/50 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                {CATEGORIES.map((category) => {
+                  const categoryItems = navItems.filter(item => category.views.includes(item.id));
+                  if (categoryItems.length === 0) return null;
+
+                  const isExpanded = expandedCategories[category.title];
+
+                  return (
+                    <div key={category.title} className="space-y-1">
+                      <button
+                        onClick={() => toggleCategory(category.title)}
+                        className={cn(
+                          "w-full flex items-center justify-between px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] transition-all group",
+                          isExpanded ? "text-slate-600" : "text-slate-400 hover:text-slate-600"
+                        )}
+                      >
+                        <span className="group-hover:translate-x-1 transition-transform">{category.title}</span>
+                        <div className={cn(
+                          "w-4 h-4 rounded flex items-center justify-center transition-all",
+                          isExpanded ? "bg-red-50 text-red-500 rotate-180" : "bg-slate-100 text-slate-400"
+                        )}>
+                          <span className="text-[10px] leading-none">{isExpanded ? '▾' : '▸'}</span>
+                        </div>
+                      </button>
+                      
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden space-y-0.5"
+                          >
+                            {categoryItems.map((item) => {
+                              const isActive = activeView === item.id;
+                              return (
+                                <button
+                                  key={item.id}
+                                  onClick={() => onViewChange(item.id as View)}
+                                  className={cn(
+                                    "w-full flex items-center justify-between px-3 py-2 rounded-xl text-[13px] transition-all group relative",
+                                    isActive 
+                                      ? "text-red-700 font-bold bg-red-50/50 border border-red-100" 
+                                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                                  )}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className={cn(
+                                      "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm",
+                                      isActive 
+                                        ? "bg-red-600 text-white ring-4 ring-red-500/10 scale-105" 
+                                        : "bg-white text-slate-400 border border-slate-100 group-hover:border-slate-200 group-hover:text-slate-600"
+                                    )}>
+                                      <item.icon className="w-4 h-4" />
+                                    </div>
+                                    <span className="truncate tracking-tight">{item.label}</span>
+                                  </div>
+                                  {isActive && (
+                                    <motion.div 
+                                      layoutId="active-nav-glow"
+                                      className="absolute left-0 w-1 h-4 bg-red-600 rounded-full"
+                                    />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </nav>
+          </div>
+          
+          {/* Sidebar Footer - Professional Info */}
+          <div className="p-4 bg-slate-50 border-t border-slate-200/60 relative z-20">
+            <div className="p-3.5 bg-white rounded-2xl border border-slate-200 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="relative">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full absolute -top-0.5 -right-0.5 animate-ping opacity-75"></div>
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full relative shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                  </div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Core Active</span>
+                </div>
+                <span className="text-[9px] font-mono font-bold text-slate-300">v4.2.0</span>
+              </div>
+              <div className="h-px w-full bg-slate-100"></div>
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-[9px] font-bold uppercase tracking-widest">Region: MENA</span>
+                <Globe className="w-3 h-3 text-slate-300" />
+              </div>
+            </div>
+          </div>
+        </motion.aside>
+
+        {/* Expand Sidebar Trigger (Floating when collapsed) */}
+        {isSidebarCollapsed && (
+          <button 
+            onClick={() => setIsSidebarCollapsed(false)}
+            className="hidden lg:flex fixed left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-slate-200 rounded-xl items-center justify-center shadow-lg hover:bg-slate-50 transition-all z-40 group hover:scale-110"
+          >
+            <PanelLeftOpen className="w-5 h-5 text-red-600" />
+            <div className="absolute left-full ml-3 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              Expand Menu
+            </div>
+          </button>
+        )}
+
 
         {/* Content Area */}
         <main className="flex-1 p-4 lg:p-8 overflow-auto print:overflow-visible print:p-0 bg-slate-50/50 print:bg-white">
@@ -449,8 +547,8 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
               onClick={e => e.stopPropagation()}
             >
               {/* Drawer Header */}
-              <div className="h-[80px] border-b border-slate-100 flex items-center justify-between px-6 bg-slate-50/80 shrink-0">
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => { onViewChange('dashboard'); setIsMobileMenuOpen(false); }}>
+              <div className="h-[80px] border-b border-slate-100 flex items-center justify-between px-6 bg-slate-50/50 backdrop-blur-md shrink-0">
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => { onViewChange('dashboard'); setIsMobileMenuOpen(false); }}>
                   {company?.logo && (
                     <img 
                       src={company.logo} 
@@ -459,83 +557,67 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
                       referrerPolicy="no-referrer"
                     />
                   )}
-                  <span className="text-xl font-bold text-red-600 tracking-tight">REDSEA</span>
-                  <span className="text-sm font-light text-slate-400">| RETAIL</span>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-black text-red-600 tracking-tighter leading-none">REDSEA</span>
+                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Holding</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <button 
-                    onClick={() => { setActiveCenter('messages'); setIsMobileMenuOpen(false); }} 
-                    className="p-2 text-slate-400 hover:text-red-500 relative"
-                  >
-                    <MessageSquare className="w-5 h-5" />
-                    {notifications.filter(n => !n.read && (n.type === 'Request' || n.type === 'Alert' || n.type === 'Message')).length > 0 && (
-                      <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                    )}
-                  </button>
-                  <button 
-                    onClick={() => { setActiveCenter('notifications'); setIsMobileMenuOpen(false); }} 
-                    className="p-2 text-slate-400 hover:text-red-500 relative"
-                  >
-                    <Bell className="w-5 h-5" />
-                    {notifications.filter(n => !n.read && n.type !== 'Request' && n.type !== 'Alert' && n.type !== 'Message').length > 0 && (
-                      <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                    )}
-                  </button>
-                  <button 
                     onClick={() => setIsMobileMenuOpen(false)} 
-                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors ml-1"
+                    className="p-2 hover:bg-slate-800 rounded-xl transition-colors ml-1"
                   >
-                    <X className="w-5 h-5 text-slate-500" />
+                    <X className="w-5 h-5 text-slate-400" />
                   </button>
                 </div>
               </div>
 
               {/* Drawer Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              <div className="flex-1 overflow-y-auto p-4 space-y-8 modern-scrollbar">
                 
                 {/* Mobile Specific Time Filters and Highlights */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
-                  <div className="flex justify-between items-center text-xs font-medium text-slate-400">
-                    <span onClick={() => setTimeFilter('Day')} className={cn("cursor-pointer py-1 px-2 rounded transition-colors", timeFilter === 'Day' ? "text-red-600 bg-white font-bold shadow-xs" : "hover:text-slate-600")}>Day</span>
-                    <span onClick={() => setTimeFilter('Week')} className={cn("cursor-pointer py-1 px-2 rounded transition-colors", timeFilter === 'Week' ? "text-red-600 bg-white font-bold shadow-xs" : "hover:text-slate-600")}>Week</span>
-                    <span onClick={() => setTimeFilter('Month')} className={cn("cursor-pointer py-1 px-2 rounded transition-colors", timeFilter === 'Month' ? "text-red-600 bg-white font-bold shadow-xs" : "hover:text-slate-600")}>Month</span>
-                    <span onClick={() => setTimeFilter('Year')} className={cn("cursor-pointer py-1 px-2 rounded transition-colors", timeFilter === 'Year' ? "text-red-600 bg-white font-bold shadow-xs" : "hover:text-slate-600")}>Year</span>
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-5">
+                  <div className="flex justify-between items-center bg-white p-1 rounded-xl border border-slate-200">
+                    {['Day', 'Week', 'Month', 'Year'].map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setTimeFilter(f as any)}
+                        className={cn(
+                          "flex-1 py-1.5 px-2 rounded-lg text-[10px] font-bold transition-all",
+                          timeFilter === f ? "bg-red-600 text-white shadow-lg" : "text-slate-500 hover:text-slate-700"
+                        )}
+                      >
+                        {f}
+                      </button>
+                    ))}
                   </div>
                   
-                  <div className="bg-red-600 text-white p-3.5 rounded-lg bg-gradient-to-br from-red-500 to-red-700 shadow-sm flex items-center justify-between">
-                    <div>
-                      <div className="text-xl font-bold leading-none tracking-tight">{dateTop}</div>
-                      <div className="text-[9px] uppercase tracking-widest opacity-80 mt-1">{dateBottom}</div>
+                  <div className="bg-gradient-to-br from-red-600 to-red-700 text-white p-5 rounded-2xl shadow-xl shadow-red-900/20 flex items-center justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12"></div>
+                    <div className="relative z-10">
+                      <div className="text-xl font-black leading-none tracking-tight">{dateTop}</div>
+                      <div className="text-[9px] uppercase font-black tracking-[0.2em] opacity-70 mt-2">{dateBottom}</div>
                     </div>
-                    <CalendarCheck className="w-5 h-5 opacity-80" />
-                  </div>
-
-                  <div className="flex justify-between items-center text-[11px] font-medium text-slate-400 border-t border-slate-200/60 pt-3">
-                    <div className="flex gap-3">
-                      <span onClick={() => setViewFilter('Views')} className={cn("cursor-pointer transition-colors", viewFilter === 'Views' ? "text-red-600 font-bold" : "hover:text-slate-600")}>Views</span>
-                      <span onClick={() => setViewFilter('Reports')} className={cn("cursor-pointer transition-colors", viewFilter === 'Reports' ? "text-red-600 font-bold" : "hover:text-slate-600")}>Reports</span>
-                    </div>
-                    <div className="flex gap-2 bg-slate-200/50 p-0.5 rounded text-[10px]">
-                      <span onClick={() => setSubFilter('Total')} className={cn("px-1.5 py-0.5 rounded cursor-pointer", subFilter === 'Total' ? "bg-white text-slate-800 font-bold" : "opacity-70")}>Total</span>
-                      <span onClick={() => setSubFilter('Sections')} className={cn("px-1.5 py-0.5 rounded cursor-pointer", subFilter === 'Sections' ? "bg-white text-slate-800 font-bold" : "opacity-70")}>Sections</span>
-                    </div>
+                    <CalendarCheck className="w-6 h-6 opacity-40 relative z-10" />
                   </div>
                 </div>
 
                 {/* Module Search */}
-                <div className="relative">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input 
-                    type="text" 
-                    placeholder="Search module" 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-150 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                  />
+                <div className="px-1">
+                  <div className="relative group">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 group-focus-within:text-red-500 transition-colors" />
+                    <input 
+                      type="text" 
+                      placeholder="Find system..." 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/10 outline-none transition-all"
+                    />
+                  </div>
                 </div>
 
                 {/* Category Navigation List */}
-                <nav className="space-y-2">
+                <nav className="space-y-4">
                   {CATEGORIES.map((category) => {
                     const categoryItems = navItems.filter(item => category.views.includes(item.id));
                     if (categoryItems.length === 0) return null;
@@ -543,21 +625,21 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
                     const isExpanded = expandedCategories[category.title];
 
                     return (
-                      <div key={category.title} className="space-y-1 border-b border-slate-100 pb-2 last:border-b-0">
+                      <div key={category.title} className="space-y-1">
                         <button
                           onClick={() => toggleCategory(category.title)}
-                          className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors"
+                          className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-slate-600 transition-colors"
                         >
                           {category.title}
-                          <span className="text-slate-300">{isExpanded ? '−' : '+'}</span>
+                          <span className={cn("transition-transform duration-300", isExpanded ? "rotate-180 text-red-500" : "")}>▾</span>
                         </button>
-                        <AnimatePresence>
+                        <AnimatePresence initial={false}>
                           {isExpanded && (
                             <motion.div
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden"
+                              className="overflow-hidden space-y-1 pt-1"
                             >
                               {categoryItems.map((item) => {
                                 const isActive = activeView === item.id;
@@ -569,17 +651,22 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
                                       setIsMobileMenuOpen(false);
                                     }}
                                     className={cn(
-                                      "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-all mb-0.5",
+                                      "w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs transition-all",
                                       isActive 
-                                        ? "bg-red-50 border-l-2 border-red-500 text-red-700 font-bold" 
-                                        : "text-slate-600 hover:bg-slate-100"
+                                        ? "bg-red-50 border border-red-100 text-red-700 font-bold" 
+                                        : "text-slate-600 hover:bg-slate-50"
                                     )}
                                   >
-                                    <div className="flex items-center gap-3 pr-2 truncate">
-                                      <item.icon className="w-4 h-4 shrink-0 opacity-70" />
-                                      <span className="truncate">{item.label}</span>
+                                    <div className="flex items-center gap-4">
+                                      <div className={cn(
+                                        "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                                        isActive ? "bg-red-600 text-white shadow-lg shadow-red-600/20" : "bg-white text-slate-400 border border-slate-200"
+                                      )}>
+                                        <item.icon className="w-4 h-4" />
+                                      </div>
+                                      <span className="tracking-tight">{item.label}</span>
                                     </div>
-                                    {isActive && <div className="w-1.5 h-1.5 bg-red-600 rounded-full shrink-0" />}
+                                    {isActive && <div className="w-1 h-3 bg-red-600 rounded-full" />}
                                   </button>
                                 );
                               })}
@@ -593,30 +680,29 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
               </div>
 
               {/* Drawer Sticky Footer with User Profile and Controls */}
-              <div className="border-t border-slate-150 p-4 bg-slate-50 flex flex-col gap-3 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-slate-200 rounded-full overflow-hidden relative border border-slate-200 shrink-0">
-                    <img src="https://ui-avatars.com/api/?name=User&background=f1f5f9&color=64748b" alt="User" className="w-full h-full object-cover" />
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+              <div className="border-t border-slate-100 p-6 bg-slate-50/50 backdrop-blur-xl flex flex-col gap-5 shrink-0">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white rounded-2xl overflow-hidden relative border border-slate-200 shrink-0 shadow-lg">
+                    <img src={`https://ui-avatars.com/api/?name=${userData?.name || 'User'}&background=f1f5f9&color=64748b`} alt="User" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
                   </div>
                   <div className="text-xs overflow-hidden leading-tight">
-                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Logged In</span>
-                    <span className="text-slate-700 font-bold block truncate">{userData?.name || 'Administrator'}</span>
-                    <span className="text-red-600 font-medium text-[9px] uppercase tracking-widest block">{userData?.department || 'Administrator'} UNIT</span>
+                    <span className="text-slate-900 font-bold block truncate text-sm">{userData?.name || 'Administrator'}</span>
+                    <span className="text-red-600 font-black text-[9px] uppercase tracking-widest block mt-1">{userData?.role || 'Administrator'}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-100 text-xs">
-                  <span className="text-slate-400 font-medium">System Language:</span>
+                <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-slate-200 text-[10px]">
+                  <span className="text-slate-400 font-black uppercase tracking-widest">Interface</span>
                   <div className="flex items-center gap-2">
                     <button 
-                      className={cn("px-2 py-1 rounded text-xs font-bold transition-all", language === 'en' ? "bg-red-50 text-red-600" : "text-slate-400 hover:text-slate-600")}
+                      className={cn("px-3 py-1 rounded-lg text-[10px] font-black transition-all", language === 'en' ? "bg-red-600 text-white shadow-md shadow-red-900/20" : "text-slate-400 hover:text-slate-600")}
                       onClick={() => language !== 'en' && onLanguageToggle()}
                     >
                       EN
                     </button>
                     <button 
-                      className={cn("px-2 py-1 rounded text-xs font-bold transition-all", language === 'ar' ? "bg-red-50 text-red-600" : "text-slate-400 hover:text-slate-600")}
+                      className={cn("px-3 py-1 rounded-lg text-[10px] font-black transition-all", language === 'ar' ? "bg-red-600 text-white shadow-md shadow-red-900/20" : "text-slate-400 hover:text-slate-600")}
                       onClick={() => language !== 'ar' && onLanguageToggle()}
                     >
                       AR
@@ -629,13 +715,14 @@ export function Layout({ children, activeView, onViewChange, language, onLanguag
                     setIsMobileMenuOpen(false);
                     logOut();
                   }} 
-                  className="w-full py-2 bg-white hover:bg-red-50 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-100 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs"
+                  className="w-full py-3 bg-white hover:bg-red-50 text-slate-700 hover:text-red-600 border border-slate-200 hover:border-red-100 rounded-xl text-xs font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 shadow-sm group"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>{isRtl ? 'تسجيل الخروج (Sign Out)' : 'Sign Out'}</span>
+                  <LogOut className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <span>{isRtl ? 'خروج' : 'Sign Out'}</span>
                 </button>
               </div>
             </motion.div>
+
           </motion.div>
         )}
       </AnimatePresence>

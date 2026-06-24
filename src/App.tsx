@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { translations, Language } from './lib/translations';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
@@ -331,64 +331,63 @@ function AppContent() {
   React.useEffect(() => {
     // Bi-directional sync of daily outputs & productivity records based on active view
     if (activeView === 'projects') {
-      let changed = false;
       const updatedProductivity = [...productivityRecords];
+      let changed = false;
 
       dailyOutputs.forEach(doRec => {
         const matchingIdx = updatedProductivity.findIndex(p => p.id === doRec.id);
         const proj = projects.find(p => p.id === doRec.projectId);
         const projectName = proj ? proj.name : 'General Project';
 
-        const prTaskWorkers = workers.filter(w => w.projectId === doRec.projectId && (doRec.taskId ? w.assignedTaskId === doRec.taskId : true));
-        const workerIds = prTaskWorkers.map(w => w.id);
-        const workerNames = prTaskWorkers.map(w => w.name);
-        
-        const workerRecords = prTaskWorkers.map(w => ({
-          workerId: w.id,
-          workerName: w.name,
-          actuallyCompleted: Math.round((doRec.actualMeters || 100) / (prTaskWorkers.length || 1)),
-          unitCost: 15,
-          totalCost: Math.round((doRec.actualMeters || 100) / (prTaskWorkers.length || 1)) * 15,
-          dailyQuota: Math.round((doRec.expectedMeters || 100) / (prTaskWorkers.length || 1)),
-          triHourlyQuota: Math.round(((doRec.expectedMeters || 100) / (prTaskWorkers.length || 1)) / 3)
-        }));
-
-        const primaryWorkerName = workerNames.length === 1 ? workerNames[0] : (workerNames.length > 0 ? `${workerNames.length} Workers` : 'Unknown Worker');
-        const primaryWorkerId = workerIds.length === 1 ? workerIds[0] : (workerIds.length > 0 ? 'Multiple' : '00000');
-
-        const expectedCompleted = doRec.actualMeters || 0;
+        // Pre-calculate to avoid redundant checks
         const expectedQuota = doRec.expectedMeters || 100;
-
-        const newProdRec = {
-          id: doRec.id,
-          projectId: doRec.projectId,
-          projectName: projectName,
-          workerId: primaryWorkerId,
-          workerName: primaryWorkerName,
-          workerIds: workerIds,
-          workerNames: workerNames,
-          workerRecords: workerRecords,
-          date: doRec.date,
-          taskDescription: doRec.workersType || 'Site Activity',
-          dailyQuota: expectedQuota,
-          triHourlyQuota: Math.round(expectedQuota / 3),
-          weeklyQuota: expectedQuota * 5,
-          monthlyQuota: expectedQuota * 22,
-          actuallyCompleted: expectedCompleted,
-          unitMeasurement: 'Square Meters',
-          unitCost: 15,
-          totalCost: expectedCompleted * 15,
-          notes: doRec.notes || '',
-          _timeframe: doRec.timeframe,
-          _workersCount: doRec.workersCount,
-          _workersType: doRec.workersType,
-          _daysRequired: doRec.daysRequired,
-          _status: doRec.status,
-          _taskId: doRec.taskId
-        };
+        const expectedCompleted = doRec.actualMeters || 0;
 
         if (matchingIdx === -1) {
-          updatedProductivity.push(newProdRec);
+          const prTaskWorkers = workers.filter(w => w.projectId === doRec.projectId && (doRec.taskId ? w.assignedTaskId === doRec.taskId : true));
+          const workerIds = prTaskWorkers.map(w => w.id);
+          const workerNames = prTaskWorkers.map(w => w.name);
+          
+          const workerRecords = prTaskWorkers.map(w => ({
+            workerId: w.id,
+            workerName: w.name,
+            actuallyCompleted: Math.round(expectedCompleted / (prTaskWorkers.length || 1)),
+            unitCost: 15,
+            totalCost: Math.round(expectedCompleted / (prTaskWorkers.length || 1)) * 15,
+            dailyQuota: Math.round(expectedQuota / (prTaskWorkers.length || 1)),
+            triHourlyQuota: Math.round((expectedQuota / (prTaskWorkers.length || 1)) / 3)
+          }));
+
+          const primaryWorkerName = workerNames.length === 1 ? workerNames[0] : (workerNames.length > 0 ? `${workerNames.length} Workers` : 'Unknown Worker');
+          const primaryWorkerId = workerIds.length === 1 ? workerIds[0] : (workerIds.length > 0 ? 'Multiple' : '00000');
+
+          updatedProductivity.push({
+            id: doRec.id,
+            projectId: doRec.projectId,
+            projectName,
+            workerId: primaryWorkerId,
+            workerName: primaryWorkerName,
+            workerIds,
+            workerNames,
+            workerRecords,
+            date: doRec.date,
+            taskDescription: doRec.workersType || 'Site Activity',
+            dailyQuota: expectedQuota,
+            triHourlyQuota: Math.round(expectedQuota / 3),
+            weeklyQuota: expectedQuota * 5,
+            monthlyQuota: expectedQuota * 22,
+            actuallyCompleted: expectedCompleted,
+            unitMeasurement: 'Square Meters',
+            unitCost: 15,
+            totalCost: expectedCompleted * 15,
+            notes: doRec.notes || '',
+            _timeframe: doRec.timeframe,
+            _workersCount: doRec.workersCount,
+            _workersType: doRec.workersType,
+            _daysRequired: doRec.daysRequired,
+            _status: doRec.status,
+            _taskId: doRec.taskId
+          });
           changed = true;
         } else {
           const existing = updatedProductivity[matchingIdx];
@@ -399,80 +398,79 @@ function AppContent() {
             existing.dailyQuota !== expectedQuota ||
             existing.notes !== (doRec.notes || '') ||
             existing.taskDescription !== (doRec.workersType || 'Site Activity') ||
-            existing._timeframe !== doRec.timeframe ||
-            existing._workersCount !== doRec.workersCount ||
-            existing._daysRequired !== doRec.daysRequired ||
-            existing._status !== doRec.status ||
-            existing._taskId !== doRec.taskId
+            existing._status !== doRec.status
           ) {
-            updatedProductivity[matchingIdx] = { ...existing, ...newProdRec };
+            updatedProductivity[matchingIdx] = { ...existing, 
+              date: doRec.date,
+              projectId: doRec.projectId,
+              actuallyCompleted: expectedCompleted,
+              dailyQuota: expectedQuota,
+              notes: doRec.notes || '',
+              taskDescription: doRec.workersType || 'Site Activity',
+              _status: doRec.status,
+              totalCost: expectedCompleted * 15
+            };
             changed = true;
           }
         }
       });
 
-      const activeIds = new Set(dailyOutputs.map(d => d.id));
-      const filteredProductivity = updatedProductivity.filter(p => p.id === 'OP-001' || activeIds.has(p.id));
-      if (filteredProductivity.length !== updatedProductivity.length) {
-        changed = true;
-      }
-
       if (changed) {
-        setProductivityRecords(filteredProductivity);
+        setProductivityRecords(updatedProductivity);
       }
     } else if (activeView === 'productivity') {
-      let changed = false;
       const updatedDailyOutputs = [...dailyOutputs];
+      let changed = false;
 
       productivityRecords.forEach(prodRec => {
         const matchingIdx = updatedDailyOutputs.findIndex(d => d.id === prodRec.id);
-        const newDoRec = {
-          id: prodRec.id,
-          projectId: prodRec.projectId,
-          date: prodRec.date,
-          timeframe: prodRec._timeframe || '07:00 - 16:00',
-          workersCount: prodRec.workerIds?.length || prodRec._workersCount || 10,
-          workersType: prodRec.taskDescription || prodRec._workersType || 'Site Activity',
-          expectedMeters: prodRec.dailyQuota || 100,
-          actualMeters: prodRec.actuallyCompleted || 0,
-          daysRequired: prodRec._daysRequired || 10,
-          status: prodRec._status || (prodRec.actuallyCompleted >= prodRec.dailyQuota ? 'On Track' : 'Behind Schedule'),
-          notes: prodRec.notes || '',
-          taskId: prodRec._taskId || ''
-        };
+        const expectedMeters = prodRec.dailyQuota || 100;
+        const actualMeters = prodRec.actuallyCompleted || 0;
 
         if (matchingIdx === -1) {
-          updatedDailyOutputs.push(newDoRec);
+          updatedDailyOutputs.push({
+            id: prodRec.id,
+            projectId: prodRec.projectId,
+            date: prodRec.date,
+            timeframe: prodRec._timeframe || '07:00 - 16:00',
+            workersCount: prodRec.workerIds?.length || prodRec._workersCount || 10,
+            workersType: prodRec.taskDescription || prodRec._workersType || 'Site Activity',
+            expectedMeters,
+            actualMeters,
+            daysRequired: prodRec._daysRequired || 10,
+            status: prodRec._status || (actualMeters >= expectedMeters ? 'On Track' : 'Behind Schedule'),
+            notes: prodRec.notes || '',
+            taskId: prodRec._taskId || ''
+          });
           changed = true;
         } else {
           const existing = updatedDailyOutputs[matchingIdx];
           if (
             existing.date !== prodRec.date ||
             existing.projectId !== prodRec.projectId ||
-            existing.actualMeters !== prodRec.actuallyCompleted ||
-            existing.expectedMeters !== prodRec.dailyQuota ||
-            existing.notes !== (prodRec.notes || '') ||
-            existing.workersType !== (prodRec.taskDescription || prodRec._workersType || 'Site Activity') ||
-            existing.timeframe !== (prodRec._timeframe || '07:00 - 16:00') ||
-            existing.workersCount !== (prodRec.workerIds?.length || prodRec._workersCount || 10)
+            existing.actualMeters !== actualMeters ||
+            existing.expectedMeters !== expectedMeters ||
+            existing.notes !== (prodRec.notes || '')
           ) {
-            updatedDailyOutputs[matchingIdx] = newDoRec;
+            updatedDailyOutputs[matchingIdx] = {
+              ...existing,
+              date: prodRec.date,
+              projectId: prodRec.projectId,
+              actualMeters,
+              expectedMeters,
+              notes: prodRec.notes || '',
+              status: prodRec._status || (actualMeters >= expectedMeters ? 'On Track' : 'Behind Schedule')
+            };
             changed = true;
           }
         }
       });
 
-      const activeIds = new Set(productivityRecords.map(p => p.id));
-      const filteredDailyOutputs = updatedDailyOutputs.filter(d => (d.id.startsWith('DO-') && d.id.length <= 6) || activeIds.has(d.id));
-      if (filteredDailyOutputs.length !== updatedDailyOutputs.length) {
-        changed = true;
-      }
-
       if (changed) {
-        setDailyOutputs(filteredDailyOutputs);
+        setDailyOutputs(updatedDailyOutputs);
       }
     }
-  }, [activeView, dailyOutputs, productivityRecords, projects, workers]);
+  }, [activeView, dailyOutputs, productivityRecords, projects]);
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'en' ? 'ar' : 'en');
@@ -616,42 +614,46 @@ function AppContent() {
     }
   }, [workers, user]);
 
-  const handleUpdateProject = (updatedProject: Project) => {
+  const handleUpdateProject = React.useCallback((updatedProject: Project) => {
     const isNewCompletion = updatedProject.status === 'Completed' && projects.find(p => p.id === updatedProject.id)?.status !== 'Completed';
     setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
     if (isNewCompletion) {
       createDraftInvoice(updatedProject);
     }
-  };
+  }, [projects, setProjects]);
 
-  const handleCreateProject = (newProject: Project) => {
+  const handleUpdateWorker = React.useCallback((w: Worker) => {
+    setWorkers(prev => prev.map(old => old.id === w.id ? w : old));
+  }, [setWorkers]);
+
+  const handleCreateProject = React.useCallback((newProject: Project) => {
     setProjects(prev => [newProject, ...prev]);
     if (newProject.status === 'Completed') {
       createDraftInvoice(newProject);
     }
-  };
+  }, [setProjects]);
 
-  const handleDeleteProject = (id: string) => {
+  const handleDeleteProject = React.useCallback((id: string) => {
     setProjects(prev => prev.filter(p => p.id !== id));
-  };
+  }, [setProjects]);
 
-  const handleDeleteSheet = (id: string) => {
+  const handleDeleteSheet = React.useCallback((id: string) => {
     setAttendanceSheets(prev => prev.filter(s => s.id !== id));
-  };
+  }, [setAttendanceSheets]);
 
-  const handleDeleteExpenditure = (id: string) => {
+  const handleDeleteExpenditure = React.useCallback((id: string) => {
     setExpenditures(prev => prev.filter(e => e.id !== id));
-  };
+  }, [setExpenditures]);
 
-  const handleDeleteAdditionalCost = (id: string) => {
+  const handleDeleteAdditionalCost = React.useCallback((id: string) => {
     setAdditionalCosts(prev => prev.filter(c => c.id !== id));
-  };
+  }, [setAdditionalCosts]);
 
-  const handleDeleteVarianceReport = (id: string) => {
+  const handleDeleteVarianceReport = React.useCallback((id: string) => {
     setVarianceReports(prev => prev.filter(r => r.id !== id));
-  };
+  }, [setVarianceReports]);
 
-  const renderContent = () => {
+  const renderContent = useMemo(() => {
     switch (activeView) {
       case 'dashboard':
         return <Dashboard projects={projects} invoices={invoices} workers={workers} language={language} company={company} onViewChange={setActiveView} />;
@@ -677,7 +679,7 @@ function AppContent() {
       case 'payroll':
         return <PayrollManager workers={workers} projects={projects} company={company} language={language} />;
       case 'hr':
-        return <Workforce projects={projects} workers={workers} setWorkers={setWorkers} language={language} company={company} />;
+        return <Workforce projects={projects} workers={workers} setWorkers={handleUpdateWorker} language={language} company={company} />;
       case 'accommodation':
         return <Accommodation language={language} company={company} />;
       case 'finance':
@@ -774,7 +776,23 @@ function AppContent() {
       default:
         return <Dashboard projects={projects} invoices={invoices} workers={workers} language={language} company={company} />;
     }
-  };
+  }, [
+    activeView, 
+    projects, 
+    invoices, 
+    workers, 
+    language, 
+    company, 
+    resources, 
+    assets, 
+    dailyOutputs, 
+    costSheets, 
+    attendanceSheets, 
+    additionalCosts, 
+    expenditures, 
+    varianceReports, 
+    productivityRecords
+  ]);
 
   if (loading) {
     return (
@@ -821,7 +839,7 @@ function AppContent() {
       onLanguageToggle={toggleLanguage}
       company={company}
     >
-      {renderContent()}
+      {renderContent}
     </Layout>
   );
 }

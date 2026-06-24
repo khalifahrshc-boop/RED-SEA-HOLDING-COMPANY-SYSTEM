@@ -68,7 +68,7 @@ interface FinanceProps {
   onNavigate?: (view: View) => void;
 }
 
-export function Finance({ invoices, setInvoices, costSheets, setCostSheets, workers, language, projects, onUpdateProject, company, onNavigate }: FinanceProps) {
+export const Finance = React.memo(({ invoices, setInvoices, costSheets, setCostSheets, workers, language, projects, onUpdateProject, company, onNavigate }: FinanceProps) => {
   const { t, d } = useTranslation(language);
   const { hasPermission, userData, user } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'Invoices' | 'Payrolls' | 'Costing' | 'Ledgers' | 'AccountingTree'>('Invoices');
@@ -925,13 +925,20 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-end">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 uppercase tracking-tight">{t.finance}</h2>
-          <p className="text-slate-500 text-sm italic font-medium">ZATCA e-Invoicing Phase 2 Integrity Node.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none">{t.finance}</h2>
+          </div>
+          <p className="text-slate-500 text-sm font-medium flex items-center gap-2">
+            Fiscal Governance & Audit
+            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+            <span className="text-slate-400 italic">ZATCA e-Invoicing Phase 2 Integrity Node</span>
+          </p>
         </div>
-        <div className="flex gap-3 print:hidden">
+        <div className="flex gap-4 print:hidden">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -942,66 +949,56 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
           {hasPermission('accounting', 'finance', 'edit') && (
             <button 
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
+              className="enterprise-btn-secondary flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
-              Import Excel
+              Source Upload
             </button>
           )}
           {hasPermission('accounting', 'finance', 'export') && (
             <button 
               onClick={exportToExcel}
-              className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
+              className="enterprise-btn-secondary flex items-center gap-2"
             >
-              <FileSpreadsheet className="w-4 h-4" />
-              Export to Excel
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              Payload Export
             </button>
           )}
           {hasPermission('accounting', 'finance', 'create') && (
             <button 
               onClick={() => setIsCreatingInvoice(true)}
-              className="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-semibold hover:bg-slate-800 transition-colors shadow-md flex items-center gap-2"
+              className="enterprise-btn-primary"
             >
-              <Plus className="w-4 h-4" />
-              Add Invoice
-            </button>
-          )}
-          {hasPermission('hr', 'payroll', 'create') && (
-            <button 
-              onClick={() => setActiveTab('Payrolls')}
-              className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-semibold hover:bg-red-700 transition-colors shadow-md shadow-red-100"
-            >
-              Execute Payroll
+              <Plus className="w-5 h-5" />
+              Add Voucher
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-1 border-b border-slate-100 w-full overflow-x-auto whitespace-nowrap pb-px">
+      <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border border-slate-200 overflow-x-auto print:hidden">
         {hasPermission('accounting', 'finance', 'view') && (
           <button
             onClick={() => setActiveTab('Invoices')}
             className={cn(
-              "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
-              activeTab === 'Invoices' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
+              "px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all rounded-xl flex items-center gap-3",
+              activeTab === 'Invoices' ? "bg-white text-red-600 shadow-sm border border-slate-200" : "text-slate-500 hover:bg-slate-100"
             )}
           >
-            <Receipt className="w-4 h-4" />
-            A/P Ledgers
-            {activeTab === 'Invoices' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
+            <Receipt className={cn("w-4 h-4", activeTab === 'Invoices' ? "text-red-500" : "text-slate-400")} />
+            Fiscal Ledgers
           </button>
         )}
         {hasPermission('hr', 'payroll', 'view') && (
           <button
             onClick={() => setActiveTab('Payrolls')}
             className={cn(
-              "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2",
-              activeTab === 'Payrolls' ? "text-red-600" : "text-slate-400 hover:text-slate-600"
+              "px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all rounded-xl flex items-center gap-3",
+              activeTab === 'Payrolls' ? "bg-white text-red-600 shadow-sm border border-slate-200" : "text-slate-500 hover:bg-slate-100"
             )}
           >
-            <Users className="w-4 h-4" />
-            Payroll Cycles
-            {activeTab === 'Payrolls' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600" />}
+            <Users className={cn("w-4 h-4", activeTab === 'Payrolls' ? "text-red-500" : "text-slate-400")} />
+            Payroll Matrix
           </button>
         )}
         {hasPermission('accounting', 'finance', 'view') && (
@@ -1970,4 +1967,4 @@ export function Finance({ invoices, setInvoices, costSheets, setCostSheets, work
       )}
     </div>
   );
-}
+});

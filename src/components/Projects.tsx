@@ -143,7 +143,7 @@ interface ProjectsProps {
   setDailyOutputs?: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-export function Projects({ 
+export const Projects = React.memo(({ 
   projects, 
   onUpdateProject, 
   onCreateProject, 
@@ -158,7 +158,7 @@ export function Projects({
   setAssets,
   dailyOutputs: propsDailyOutputs,
   setDailyOutputs: propsSetDailyOutputs
-}: ProjectsProps) {
+}: ProjectsProps) => {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
 
@@ -1400,7 +1400,7 @@ export function Projects({
         accountingApproved: true
       };
 
-      setAssets(prev => {
+      setAssets?.(prev => {
         if (!prev.some(a => (a.name || '').toLowerCase() === (resName || '').toLowerCase())) {
           return [...prev, newAsset];
         }
@@ -1410,14 +1410,6 @@ export function Projects({
 
     setIsResourceModalOpen(false);
   };
-
-  const kpiData = [
-    { subject: 'Efficiency', A: 85, fullMark: 100 },
-    { subject: 'Velocity', A: 92, fullMark: 100 },
-    { subject: 'Financial Health', A: Math.min(100, Math.round((selectedProject?.revenueGenerated || 1) / (selectedProject?.spent || 1) * 80)), fullMark: 100 },
-    { subject: 'Resources', A: 88, fullMark: 100 },
-    { subject: 'Compliance', A: 95, fullMark: 100 },
-  ];
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -1435,55 +1427,74 @@ export function Projects({
     return null;
   };
 
+  const kpiData = [
+    { subject: t.kpi?.efficiency || 'Efficiency', A: 85, fullMark: 100 },
+    { subject: t.kpi?.velocity || 'Velocity', A: 92, fullMark: 100 },
+    { subject: t.kpi?.financial_health || 'Financial Health', A: Math.min(100, Math.round((selectedProject?.revenueGenerated || 1) / (selectedProject?.spent || 1) * 80)), fullMark: 100 },
+    { subject: t.kpi?.resources || 'Resources', A: 88, fullMark: 100 },
+    { subject: t.kpi?.compliance || 'Compliance', A: 95, fullMark: 100 },
+  ];
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 uppercase tracking-tight">{t.projects_view.title}</h2>
-          <p className="text-slate-500 text-sm italic font-medium">Monitoring capital allocation across {projects.length} strategic nodes.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none">{t.projects_view.title}</h2>
+          </div>
+          <p className="text-slate-500 text-sm font-medium flex items-center gap-2">
+            Asset Deployment Infrastructure
+            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+            <span className="text-slate-400 italic">Monitoring {projects.length} Strategic Global Nodes</span>
+          </p>
         </div>
-        <div className="flex gap-3 print:hidden">
+        <div className="flex gap-4 print:hidden">
           <div className="relative group">
             <button 
               onClick={() => { if (selectedProject) setIsFullReportOpen(true); }}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 border rounded-md text-xs font-bold uppercase tracking-widest shadow-sm transition-all active:scale-95",
-                selectedProject 
-                  ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50" 
-                  : "bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed"
+                "enterprise-btn-secondary",
+                !selectedProject && "opacity-50 cursor-not-allowed"
               )}
             >
-              <LayoutDashboard className={cn("w-3 h-3", selectedProject ? "text-red-600" : "text-slate-300")} />
-              Report Matrix {selectedProject && <ChevronDown className="w-3 h-3 ml-1" />}
+              <LayoutDashboard className={cn("w-4 h-4", selectedProject ? "text-red-600" : "text-slate-300")} />
+              Project Intelligence Matrix {selectedProject && <ChevronDown className="w-4 h-4 ml-1" />}
             </button>
             {selectedProject && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+              <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 py-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                 {hasPermission('projects', 'projects', 'view') && (
                   <button 
                     onClick={() => setIsFullReportOpen(true)}
-                    className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
+                    className="w-full text-left px-5 py-4 text-[10px] font-black text-slate-900 hover:bg-slate-50 flex items-center gap-4 uppercase tracking-[0.2em] transition-all"
                   >
-                    <LayoutDashboard className="w-4 h-4 text-red-600" />
-                    Open Comprehensive Matrix
+                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
+                      <LayoutDashboard className="w-4 h-4" />
+                    </div>
+                    Full Intel Matrix
                   </button>
                 )}
-                <div className="h-px bg-slate-100 my-1 mx-2"></div>
+                <div className="h-px bg-slate-100 my-2 mx-4"></div>
                 {hasPermission('projects', 'projects', 'print') && (
                   <button 
                     onClick={handlePrint}
-                    className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
+                    className="w-full text-left px-5 py-4 text-[10px] font-black text-slate-500 hover:bg-slate-50 flex items-center gap-4 uppercase tracking-[0.2em] transition-all"
                   >
-                    <Printer className="w-4 h-4" />
-                    Global Ledger PDF
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                      <Printer className="w-4 h-4" />
+                    </div>
+                    Export Ledger PDF
                   </button>
                 )}
                 {hasPermission('projects', 'projects', 'export') && (
                   <button 
                     onClick={exportToExcel}
-                    className="w-full text-left px-4 py-3 text-[10px] font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-3 uppercase tracking-widest"
+                    className="w-full text-left px-5 py-4 text-[10px] font-black text-slate-500 hover:bg-slate-50 flex items-center gap-4 uppercase tracking-[0.2em] transition-all"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                    Raw Data Export (Excel)
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                      <FileSpreadsheet className="w-4 h-4" />
+                    </div>
+                    Data Payload (Excel)
                   </button>
                 )}
               </div>
@@ -1492,9 +1503,9 @@ export function Projects({
           {hasPermission('projects', 'projects', 'create') && (
             <button 
               onClick={() => { setEditingProject(null); setEditingProductivityMetrics([]); setIsModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-black transition-all active:scale-95"
+              className="enterprise-btn-primary"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-5 h-5" />
               {t.projects_view.new_project}
             </button>
           )}
@@ -4810,4 +4821,4 @@ export function Projects({
       )}
     </div>
   );
-}
+});

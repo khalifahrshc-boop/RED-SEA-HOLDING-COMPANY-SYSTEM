@@ -89,7 +89,7 @@ interface InventoryProps {
   company?: any;
 }
 
-export function Inventory({ language, projects, onUpdateProject, assets, setAssets, company }: InventoryProps) {
+export const Inventory = React.memo(({ language, projects, onUpdateProject, assets, setAssets, company }: InventoryProps) => {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
 
@@ -236,38 +236,43 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-200/60">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 uppercase tracking-tight">{t.inventory}</h2>
-          <p className="text-slate-500 text-sm italic font-medium">Unified Tracking and Asset Node Identification.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none">{t.inventory}</h2>
+          </div>
+          <p className="text-slate-500 text-sm font-medium flex items-center gap-2">
+            Asset Repository Management
+            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+            <span className="text-slate-400 italic">Tracking {assets.length} Global Operational Units</span>
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 print:hidden">
           {hasPermission('external_admin', 'inventory', 'export') && (
-            <div className="flex gap-2">
-              <button 
-                onClick={exportToExcel}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
-              >
-                <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
-                Excel
-              </button>
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
               <button 
                 onClick={handlePrintPDF}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-md text-xs font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all active:scale-95"
+                className="px-4 py-2 bg-white text-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all font-mono"
               >
-                <FileText className="w-3 h-3 text-red-600" />
                 PDF
+              </button>
+              <button 
+                onClick={exportToExcel}
+                className="px-4 py-2 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all font-mono"
+              >
+                XLSX
               </button>
             </div>
           )}
           {hasPermission('external_admin', 'inventory', 'create') && (
             <button 
               onClick={() => { setEditingAsset(null); setIsModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-black transition-all active:scale-95"
+              className="enterprise-btn-primary"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-5 h-5" />
               Register Asset
             </button>
           )}
@@ -275,20 +280,20 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
       </div>
 
       {/* Stats Quick View */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Total Assets', value: assets.length, icon: Package, color: 'blue' },
-          { label: 'Inventory Value', value: formatCurrency(assets.reduce((acc, a) => acc + a.value, 0)), icon: ShieldCheck, color: 'emerald' },
-          { label: 'Needs Repair', value: assets.filter(a => a.status === 'Under Repair').length, icon: AlertTriangle, color: 'rose' },
-          { label: 'Deployable', value: assets.filter(a => a.status === 'Active').length, icon: History, color: 'blue' },
+          { label: 'Asset Volume', value: assets.length, icon: Package, color: 'red' },
+          { label: 'Cumulative Value', value: formatCurrency(assets.reduce((acc, a) => acc + a.value, 0)), icon: ShieldCheck, color: 'blue' },
+          { label: 'In Maintenance', value: assets.filter(a => a.status === 'Under Repair').length, icon: AlertTriangle, color: 'amber' },
+          { label: 'Operational Float', value: assets.filter(a => a.status === 'Active').length, icon: History, color: 'emerald' },
         ].map((stat, i) => (
-          <div key={i} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-            <div className={`p-2 bg-${stat.color}-50 text-${stat.color}-600 rounded-lg`}>
-              <stat.icon className="w-5 h-5" />
+          <div key={i} className="glass-panel p-5 bg-white flex items-center gap-5">
+            <div className={`p-3 bg-${stat.color}-50 text-${stat.color}-600 rounded-xl shadow-sm`}>
+              <stat.icon className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
-              <p className="text-lg font-mono font-bold text-slate-900">{stat.value}</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+              <p className="text-xl font-bold font-mono text-slate-900 leading-none">{stat.value}</p>
             </div>
           </div>
         ))}
@@ -517,4 +522,4 @@ export function Inventory({ language, projects, onUpdateProject, assets, setAsse
       )}
     </div>
   );
-}
+});

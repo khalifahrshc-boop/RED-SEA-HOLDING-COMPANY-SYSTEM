@@ -44,7 +44,7 @@ interface WorkforceProps {
   company?: any;
 }
 
-export function Workforce({ projects, workers, setWorkers, language, company }: WorkforceProps) {
+export const Workforce = React.memo(({ projects, workers, setWorkers, language, company }: WorkforceProps) => {
   const { t, d } = useTranslation(language);
   const { hasPermission } = useAuth();
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -344,13 +344,20 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 uppercase tracking-tight">{t.hr}</h2>
-          <p className="text-slate-500 text-sm italic font-medium">Deployment tracking for {workers.length} operational personnel.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t.hr}</h2>
+          </div>
+          <p className="text-slate-500 text-sm font-medium flex items-center gap-2">
+            Personnel Matrix Management
+            <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+            <span className="text-slate-400 italic">Tracking {workers.length} Global Operational Assets</span>
+          </p>
         </div>
-        <div className="flex gap-3 print:hidden">
+        <div className="flex gap-4 print:hidden">
           <button 
             onClick={() => {
               setWorkers(prev => prev.map(w => {
@@ -359,33 +366,33 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
                  return w;
               }));
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 border border-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-emerald-700 transition-colors"
+            className="enterprise-btn-secondary flex items-center gap-2 border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
           >
             <CheckCircle2 className="w-4 h-4" />
-            Bulk Process Pipeline
+            Bulk Sync Pipeline
           </button>
           <button 
             onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-colors"
+            className="enterprise-btn-secondary flex items-center gap-2"
             title={selectedWorkerIds.length > 0 ? `Print ${selectedWorkerIds.length} Selected` : 'Print All Profiles'}
           >
-            <Printer className="w-4 h-4" />
-            {selectedWorkerIds.length > 0 ? `Selected (${selectedWorkerIds.length})` : 'All Profiles'}
+            <Printer className="w-4 h-4 text-red-500" />
+            {selectedWorkerIds.length > 0 ? `Reports (${selectedWorkerIds.length})` : 'Global Manifest'}
           </button>
           {hasPermission('hr', 'workforce', 'create') && (
             <button 
               onClick={() => { setEditingWorker(null); setUploadedFiles([]); setIsModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-red-700 transition-colors"
+              className="enterprise-btn-primary flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              {t.common.add}
+              Enroll Asset
             </button>
           )}
         </div>
       </div>
 
       <div className="flex gap-4 print:hidden items-center">
-        <label className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+        <label className="flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
           <input 
             type="checkbox"
             checked={selectedWorkerIds.length > 0 && selectedWorkerIds.length === filteredWorkers.length}
@@ -393,50 +400,51 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
               if (e.target.checked) setSelectedWorkerIds(filteredWorkers.map(w => w.id));
               else setSelectedWorkerIds([]);
             }}
-            className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer"
+            className="w-4 h-4 rounded-md border-slate-300 text-red-600 focus:ring-red-500/20 cursor-pointer"
           />
-          <span className="text-xs font-medium text-slate-600">All</span>
+          <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Master Select</span>
         </label>
-        <div className="flex-1 glass-panel px-4 py-2 rounded-lg flex items-center gap-3 bg-white border border-slate-200">
-          <Search className="w-4 h-4 text-slate-400" />
+        <div className="flex-1 relative group">
+          <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-red-500 transition-colors" />
           <input 
             type="text" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={t.search} 
-            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-slate-400"
+            placeholder="Search by ID, Name or Trade..." 
+            className="enterprise-input pl-12"
           />
         </div>
-        <button className="glass-panel p-2 rounded-lg text-slate-600 hover:bg-slate-50 border border-slate-200">
+        <button className="enterprise-btn-secondary px-4 py-3">
           <Filter className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {filteredWorkers.map((worker) => (
-          <div key={worker.id} className="glass-panel p-6 group hover:border-red-200 transition-all bg-white border border-slate-100">
-            <div className="flex justify-between items-start mb-6">
-              <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center text-slate-400 font-mono text-lg font-bold">
+          <div key={worker.id} className="glass-panel p-8 bg-white group hover:-translate-y-1 transition-all">
+            <div className="flex justify-between items-start mb-8">
+              <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 font-mono text-xl font-black shadow-inner group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-100 transition-all">
                 {worker.name.split(' ').map(n => n[0]).join('')}
               </div>
-              <div className="flex gap-1 items-center">
-                <input 
-                  type="checkbox"
-                  checked={selectedWorkerIds.includes(worker.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) setSelectedWorkerIds(prev => [...prev, worker.id]);
-                    else setSelectedWorkerIds(prev => prev.filter(id => id !== worker.id));
-                  }}
-                  className="w-4 h-4 mr-2 rounded border-slate-300 text-red-600 focus:ring-red-500 cursor-pointer"
-                />
+              <div className="flex gap-1 items-center bg-slate-50/50 p-1 rounded-xl border border-slate-100">
+                <div className="px-2 border-r border-slate-200">
+                  <input 
+                    type="checkbox"
+                    checked={selectedWorkerIds.includes(worker.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedWorkerIds(prev => [...prev, worker.id]);
+                      else setSelectedWorkerIds(prev => prev.filter(id => id !== worker.id));
+                    }}
+                    className="w-4 h-4 rounded-md border-slate-300 text-red-600 focus:ring-red-500/20 cursor-pointer"
+                  />
+                </div>
                 {hasPermission('hr', 'workforce', 'print') && (
                   <button 
                     onClick={() => {
                       setSelectedWorkerIds([worker.id]);
-                      setTimeout(handlePrint, 50); // call the generic print handler for just this worker
+                      setTimeout(handlePrint, 50);
                     }}
-                    className="p-1.5 text-slate-300 hover:text-emerald-600 transition-colors"
-                    title="Print PDF Profile"
+                    className="p-2 text-slate-400 hover:text-emerald-600 transition-colors"
                   >
                     <Printer className="w-4 h-4" />
                   </button>
@@ -444,7 +452,7 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
                 {hasPermission('hr', 'workforce', 'edit') && (
                   <button 
                     onClick={() => { setEditingWorker(worker); setUploadedFiles(worker.attachmentUrls || []); setIsModalOpen(true); }}
-                    className="p-1.5 text-slate-300 hover:text-red-600 transition-colors"
+                    className="p-2 text-slate-400 hover:text-red-600 transition-colors"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
@@ -452,7 +460,7 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
                 {hasPermission('hr', 'workforce', 'delete') && (
                   <button 
                     onClick={() => handleDelete(worker.id)}
-                    className="p-1.5 text-slate-300 hover:text-rose-600 transition-colors"
+                    className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -460,46 +468,52 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
               </div>
             </div>
             
-            <div className="mb-4">
-              <h3 className="font-bold text-slate-900 group-hover:text-red-700 transition-colors">{d(worker.name)}</h3>
-              <p className="text-[10px] font-mono font-bold text-red-600 bg-red-50 inline-block px-1.5 py-0.5 rounded border border-red-100 mb-1">ID: {worker.id}</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{d(worker.role)}</p>
+            <div className="mb-6">
+              <h3 className="text-lg font-black text-slate-900 group-hover:text-red-600 transition-colors leading-tight">{d(worker.name)}</h3>
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-[10px] font-mono font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100">NODE {worker.id}</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{d(worker.role)}</span>
+              </div>
             </div>
             
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs text-slate-600">
-                <MapPin className="w-4 h-4 text-slate-300" />
-                <span className="font-medium">{worker.campus} · <span className="text-slate-400">Rm {worker.room}</span></span>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-xs text-slate-600">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-black text-slate-700 uppercase tracking-tight">{worker.campus}</span>
+                  <span className="text-slate-400 font-bold">Node Area {worker.room}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-600">
-                <Utensils className="w-4 h-4 text-slate-300" />
-                <span className="capitalize">{worker.meals} Logistics Tier</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-600 pt-1">
-                <DollarSign className="w-4 h-4 text-emerald-400" />
-                <span className="font-mono font-bold text-slate-900">{worker.dailyRate}</span>
-                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-tighter">Budget Impact / Day</span>
+              <div className="flex items-center gap-3 text-xs text-slate-600">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-mono font-black text-slate-900">{worker.dailyRate} SAR</span>
+                  <span className="text-slate-400 font-bold uppercase text-[9px]">Shift Impact Vector</span>
+                </div>
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 space-y-3">
+            <div className="mt-8 pt-6 border-t border-slate-100 space-y-4">
               <div className="flex items-center justify-between">
                 <span className={cn(
-                  "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
+                  "status-badge",
                   worker.status === 'Working' ? "bg-red-50 text-red-700 border-red-100" :
                   worker.status === 'On Site' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
-                  worker.status === 'Off Duty' ? "bg-slate-100 text-slate-500 border-slate-200" :
+                  worker.status === 'Off Duty' ? "bg-slate-50 text-slate-500 border-slate-200" :
                   worker.status === 'Vacation' ? "bg-amber-50 text-amber-700 border-amber-100" :
-                  worker.status === 'On Leave' ? "bg-rose-50 text-rose-700 border-rose-100" :
                   "bg-rose-50 text-rose-700 border-rose-100"
                 )}>
-                  {d(worker.status)}
+                  {d(worker.status)} Phase
                 </span>
                 <span className={cn(
-                  "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
-                  worker.approvalStatus === 'Approved' ? "bg-emerald-500 text-white border-emerald-600" :
-                  worker.approvalStatus === 'Pending Manager' ? "bg-amber-500 text-white border-amber-600" :
-                  "bg-slate-500 text-white border-slate-600"
+                  "status-badge border-none text-white",
+                  worker.approvalStatus === 'Approved' ? "bg-emerald-500 shadow-emerald-200" :
+                  worker.approvalStatus === 'Pending Manager' ? "bg-amber-500 shadow-amber-200" :
+                  "bg-slate-500 shadow-slate-200"
                 )}>
                   {worker.approvalStatus}
                 </span>
@@ -509,25 +523,23 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
                 {worker.approvalStatus === 'Pending HR' && (
                   <button 
                     onClick={() => handleApproval(worker.id, 'Pending Manager')}
-                    className="w-full flex items-center justify-center gap-2 py-2 bg-red-50 text-red-700 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all shadow-sm"
+                    className="w-full py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-200"
                   >
-                    <ShieldCheck className="w-3 h-3" />
-                    HR Sequential Approval
+                    Sync HR Authorization
                   </button>
                 )}
                 {worker.approvalStatus === 'Pending Manager' && (
                   <button 
                     onClick={() => handleApproval(worker.id, 'Approved')}
-                    className="w-full flex items-center justify-center gap-2 py-2 bg-emerald-50 text-emerald-700 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm border border-emerald-100"
+                    className="w-full py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
                   >
-                    <UserCheck className="w-3 h-3" />
-                    Manager Linked Sign-off
+                    Final Executive Gate
                   </button>
                 )}
                 {worker.approvalStatus === 'Approved' && (
-                  <div className="flex items-center justify-center gap-2 py-2 text-emerald-600 font-bold text-[10px] uppercase tracking-widest bg-emerald-50/30 rounded border border-dashed border-emerald-200">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Deployment Authorized
+                  <div className="flex items-center justify-center gap-2 py-3 text-emerald-600 font-black text-[10px] uppercase tracking-[0.2em] bg-emerald-50/50 rounded-xl border border-dashed border-emerald-200">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Asset Verified
                   </div>
                 )}
               </div>
@@ -708,4 +720,4 @@ export function Workforce({ projects, workers, setWorkers, language, company }: 
       )}
     </div>
   );
-}
+});

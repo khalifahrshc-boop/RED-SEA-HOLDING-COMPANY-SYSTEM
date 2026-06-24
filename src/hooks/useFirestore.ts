@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { collection, doc, onSnapshot, setDoc, deleteDoc, query } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -52,46 +52,46 @@ export function useFirestoreCollection<T extends { id: string }>(
       lastSyncData.current = remoteData;
       setData(remoteData);
     }, (error) => {
-      // Don't throw for offline/missing permissions when testing, just log
-      console.warn(`Firestore sync error for ${collectionName}:`, error);
+      handleFirestoreError(error, OperationType.GET, collectionName);
     });
 
     return () => unsubscribe();
   }, [user, collectionName]);
 
-  const updateData = async (action: T[] | ((val: T[]) => T[])) => {
+  const updateData = React.useCallback(async (action: T[] | ((val: T[]) => T[])) => {
     const nextData = typeof action === 'function' ? (action as Function)(data) : action;
     setData(nextData);
 
     if (!user) return;
 
     const previousData = lastSyncData.current;
-    
-    // Optimistically update lastSyncData to prevent bounce-back
     lastSyncData.current = nextData;
 
-    nextData.forEach(async (item) => {
-      const existing = previousData.find(p => p.id === item.id);
-      if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
-        try {
-          const { id, ...rest } = item;
-          await setDoc(doc(db, collectionName, id), cleanData(rest), { merge: true });
-        } catch (error) {
-          console.error(`Error saving to ${collectionName}:`, error);
-        }
-      }
-    });
+    try {
+      // Find changed or new items
+      const changedOrNew = nextData.filter((item: T) => {
+        const prev = previousData.find(p => p.id === item.id);
+        if (!prev) return true;
+        return JSON.stringify(prev) !== JSON.stringify(item);
+      });
 
-    previousData.forEach(async (item) => {
-      if (!nextData.some(n => n.id === item.id)) {
-        try {
-          await deleteDoc(doc(db, collectionName, item.id));
-        } catch (error) {
-          console.error(`Error deleting from ${collectionName}:`, error);
-        }
+      for (const item of changedOrNew) {
+        const { id, ...rest } = item;
+        await setDoc(doc(db, collectionName, id), cleanData(rest), { merge: true });
       }
-    });
-  };
+
+      // Find deleted items
+      const deletedIds = previousData
+        .filter(prev => !nextData.some(n => n.id === prev.id))
+        .map(prev => prev.id);
+
+      for (const id of deletedIds) {
+        await deleteDoc(doc(db, collectionName, id));
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, collectionName);
+    }
+  }, [user, collectionName, data]);
 
   return [data, updateData];
 }

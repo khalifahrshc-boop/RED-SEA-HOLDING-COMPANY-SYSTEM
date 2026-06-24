@@ -45,6 +45,13 @@ export const translations = {
       budget_utilization: "Budget Utilization",
       project_health: "Project Health Index"
     },
+    kpi: {
+      efficiency: "Efficiency",
+      velocity: "Velocity",
+      financial_health: "Financial Health",
+      resources: "Resources",
+      compliance: "Compliance"
+    },
     data: {
       "Submitted by": "تم تقديمه بواسطة",
       "North Delta Bridge": "جسر شمال الدلتا",
@@ -122,6 +129,13 @@ export const translations = {
       budget_utilization: "استخدام الميزانية",
       project_health: "مؤشر صحة المشروع"
     },
+    kpi: {
+      efficiency: "الكفاءة",
+      velocity: "السرعة",
+      financial_health: "الصحة المالية",
+      resources: "الموارد",
+      compliance: "الامتثال"
+    },
     data: {
       "North Delta Bridge": "جسر شمال الدلتا",
       "Red Sea Tourism Hub": "مركز البحر الأحمر السياحي",
@@ -187,12 +201,14 @@ export const translations = {
 };
 
 export const useTranslation = (language: Language) => {
-  const t = translations[language];
+  const t = translations[language] || translations['en'];
   
   const d = (value: string | undefined): string => {
     if (!value) return '';
-    if (language === 'en') return value;
-    return t.data[value as keyof typeof t.data] || value;
+    const lang = translations[language] ? language : 'en';
+    const currentT = translations[lang];
+    if (lang === 'en') return value;
+    return (currentT.data as any)[value] || value;
   };
 
   return { t, d };

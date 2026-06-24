@@ -364,7 +364,13 @@ service cloud.firestore {
     match /food_inventory/{id} { allow read, write: if isSignedIn(); }
     match /contractor_claims/{id} { allow read, write: if isSignedIn(); }
     match /contract_drafts/{id} { allow read, write: if isSignedIn(); }
-    match /planning_tasks/{id} { allow read, write: if isSignedIn(); }
+    match /planning_tasks/{id} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isValidId(id) && isValidProjectTask(incoming());
+      allow update: if isVerified() && isValidProjectTask(incoming());
+      allow delete: if isAdmin() || isVerified();
+    }
+
     match /project_charters/{id} { allow read, write: if isSignedIn(); }
     match /p6_wbs/{id} { allow read, write: if isSignedIn(); }
     match /p6_activities/{id} { allow read, write: if isSignedIn(); }
@@ -393,6 +399,24 @@ service cloud.firestore {
           && (!data.keys().hasAll(['templateName']) || (data.templateName is string && data.templateName.size() <= 100))
           && (!data.keys().hasAll(['createdAt']) || (data.createdAt is string || data.createdAt is timestamp))
           && (!data.keys().hasAll(['updatedAt']) || (data.updatedAt is string || data.updatedAt is timestamp));
+    }
+
+    function isValidProjectTask(data) {
+      return (data.projectId is string && data.projectId.size() <= 128)
+          && (data.task is string && data.task.size() <= 500)
+          && (data.status is string && data.status in ['Pending', 'In Progress', 'Completed'])
+          && (!data.keys().hasAll(['goal']) || (data.goal is string && data.goal.size() <= 2000))
+          && (!data.keys().hasAll(['taskType']) || (data.taskType is string))
+          && (!data.keys().hasAll(['expectedMeters']) || (data.expectedMeters is number))
+          && (!data.keys().hasAll(['maxWorkers']) || (data.maxWorkers is number))
+          && (!data.keys().hasAll(['maxManagers']) || (data.maxManagers is number))
+          && (!data.keys().hasAll(['allowedRole']) || (data.allowedRole is string))
+          && (!data.keys().hasAll(['location']) || (data.location is string))
+          && (!data.keys().hasAll(['startDay']) || (data.startDay is number))
+          && (!data.keys().hasAll(['endDay']) || (data.endDay is number))
+          && (!data.keys().hasAll(['assignedTo']) || (data.assignedTo is map))
+          && (!data.keys().hasAll(['department']) || (data.department is string))
+          && (!data.keys().hasAll(['createdAt']) || (data.createdAt is string || data.createdAt is timestamp));
     }
 
     match /dailyReports/{id} {

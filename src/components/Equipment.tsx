@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Asset, Project, AppNotification } from '../types';
-import { Settings, Plus, LayoutGrid, List, FileText, Download, ArrowDownToLine, Trash2, Printer, Edit2, CheckCircle } from 'lucide-react';
+import { Settings, Plus, LayoutGrid, List, FileText, Download, ArrowDownToLine, Trash2, Printer, Edit2, CheckCircle, Building2 } from 'lucide-react';
 import { Language, translations } from '../lib/translations';
 import { formatCurrency, cn, triggerSystemNotification, createAuditLog } from '../lib/utils';
 import jsPDF from 'jspdf';
@@ -80,7 +80,7 @@ const initialAssets: Asset[] = [
   { id: 'A2', referenceNumber: 'EQ-VH-002', name: 'Transport Bus', model: 'Mercedes Sprinter', category: 'Vehicles', ownershipType: 'Rented', rentalSource: 'Auto Lease Inc.', dailyCost: 200, serialNumber: 'SN-V8829', acquisitionDate: '2023-11-20', condition: 'Mint', status: 'Active', location: 'HQ', value: 45000, quantity: 2, unit: 'Item', accountingApproved: true }
 ];
 
-export function Equipment({ language, projects, company, assets, setAssets }: EquipmentProps) {
+export const Equipment = React.memo(({ language, projects, company, assets, setAssets }: EquipmentProps) => {
   const { userData, hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<'inventory' | 'dispatch' | 'return' | 'destruction' | 'requests'>('inventory');
   const [dispatchReports, setDispatchReports] = useFirestoreCollection<DispatchReport>('dispatch_reports', []);
@@ -1082,67 +1082,78 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6 border-b border-slate-100">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-extrabold text-slate-900 font-display tracking-tight uppercase">Equipment & Assets</h2>
-          <p className="text-sm text-slate-500 font-medium">Manage physical resources and company assets</p>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 pb-8 border-b border-slate-200/60">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+             <div className="w-1.5 h-6 bg-red-600 rounded-full"></div>
+             <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none">Global Asset Matrix</h2>
+          </div>
+          <p className="text-sm text-slate-500 font-medium flex items-center gap-2">
+            <Settings className="w-4 h-4 text-slate-300" />
+            Tracking and Logistical Control for {assets.length} Operational Assets
+          </p>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-          <select 
-            value={activeWarehouse} 
-            onChange={(e) => setActiveWarehouse(e.target.value)}
-            className="bg-white border border-slate-200 text-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold uppercase tracking-wide outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all shadow-sm grow sm:grow-0"
-          >
-            <option value="MAIN">🏢 Main Company Warehouse</option>
-            {projects.map(p => <option key={p.id} value={p.id}>🏗️ {p.name} Warehouse</option>)}
-          </select>
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
+          <div className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+              <Building2 className="w-4 h-4" />
+            </div>
+            <select 
+              value={activeWarehouse} 
+              onChange={(e) => setActiveWarehouse(e.target.value)}
+              className="enterprise-input pl-11 pr-10 appearance-none min-w-[280px] font-bold text-slate-700"
+            >
+              <option value="MAIN">Main Company Repository</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name} Node</option>)}
+            </select>
+          </div>
           
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             {activeTab === 'inventory' ? (
               <>
                 {selectedAssets.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
-                  <button onClick={handlePrintSelected} className="flex items-center justify-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all active:scale-[0.98]">
-                    <Printer className="w-3.5 h-3.5" /> Print Selected
+                  <button onClick={handlePrintSelected} className="enterprise-btn-secondary py-3 px-4 flex items-center gap-2 bg-red-50 border-red-100 text-red-600">
+                    <Printer className="w-4 h-4" /> Print ({selectedAssets.size})
                   </button>
                 )}
                 {hasPermission('internal_admin', 'equipment', 'export') && (
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-                    <button onClick={handleExportPDF} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-md text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 shadow-sm">
-                      <FileText className="w-3.5 h-3.5" /> PDF
+                  <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button onClick={handleExportPDF} className="px-4 py-2 bg-white text-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all">
+                      PDF
                     </button>
-                    <button onClick={handleExportExcel} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-md text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 shadow-sm">
-                      <Download className="w-3.5 h-3.5" /> Excel
+                    <button onClick={handleExportExcel} className="px-4 py-2 text-slate-500 hover:text-slate-700 text-[10px] font-black uppercase tracking-widest transition-all">
+                      Excel
                     </button>
                   </div>
                 )}
                 {hasPermission('internal_admin', 'equipment', 'create') && (
-                  <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all active:scale-[0.98] grow sm:grow-0">
-                    <Plus className="w-4 h-4" /> New Asset
+                  <button onClick={() => { setEditingAsset(null); setIsModalOpen(true); }} className="enterprise-btn-primary">
+                    <Plus className="w-5 h-5" /> New Asset
                   </button>
                 )}
               </>
             ) : activeTab === 'dispatch' ? (
               <>
                  {selectedReports.size > 0 && hasPermission('internal_admin', 'equipment', 'print') && (
-                  <button onClick={handlePrintSelectedDispatch} className="flex items-center justify-center gap-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all">
-                    <Printer className="w-3.5 h-3.5" /> Print Selected ({selectedReports.size})
+                  <button onClick={handlePrintSelectedDispatch} className="enterprise-btn-secondary py-3 px-4 bg-red-50 border-red-100 text-red-600">
+                    <Printer className="w-4 h-4" /> Print Selected ({selectedReports.size})
                   </button>
                 )}
                 {hasPermission('internal_admin', 'equipment', 'export') && (
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-                    <button onClick={handleExportDispatchPDF} className="p-1.5 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 shadow-sm" title="Export PDF">
-                      <FileText className="w-3.5 h-3.5" />
+                  <div className="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                    <button onClick={handleExportDispatchPDF} className="p-2 bg-white text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 transition-all">
+                      <FileText className="w-4 h-4" />
                     </button>
-                    <button onClick={handleExportDispatchExcel} className="p-1.5 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 shadow-sm" title="Export Excel">
-                      <Download className="w-3.5 h-3.5" />
+                    <button onClick={handleExportDispatchExcel} className="p-2 text-slate-500 hover:text-slate-700 transition-all">
+                      <Download className="w-4 h-4" />
                     </button>
                   </div>
                 )}
                 {hasPermission('internal_admin', 'equipment', 'dispatch') && (
-                  <button onClick={() => { setEditingReport(null); setIsDispatchModalOpen(true); }} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all active:scale-[0.98] grow sm:grow-0">
-                    <Plus className="w-4 h-4" /> New Dispatch
+                  <button onClick={() => { setEditingReport(null); setIsDispatchModalOpen(true); }} className="enterprise-btn-primary">
+                    <Plus className="w-5 h-5" /> New Dispatch
                   </button>
                 )}
               </>
@@ -1201,65 +1212,38 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
             )}
           </div>
         </div>
+            {/* Modern High-Tier Tab Suite */}
+      <div className="flex overflow-x-auto selection:bg-red-50 modern-scrollbar bg-slate-50/50 p-2 rounded-2xl border border-slate-100 gap-2 mb-8">
+        {[
+          { id: 'inventory', label: 'Asset Inventory', icon: LayoutGrid },
+          { id: 'requests', label: 'Material Requests', icon: ArrowDownToLine },
+          { id: 'dispatch', label: 'Dispatch Control', icon: FileText },
+          { id: 'return', label: 'Return Logs', icon: CheckCircle },
+          { id: 'destruction', label: 'Disposal Matrix', icon: Trash2 },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={cn(
+                "flex items-center gap-2.5 px-6 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shrink-0 whitespace-nowrap",
+                isActive 
+                  ? "bg-slate-900 text-white shadow-xl shadow-slate-200" 
+                  : "text-slate-400 hover:text-slate-900 hover:bg-white"
+              )}
+            >
+              <Icon className={cn("w-4 h-4", isActive ? "text-red-500" : "text-slate-400")} />
+              {tab.label}
+              {tab.id === 'requests' && transferRequests.filter(r => r.status === 'Pending').length > 0 && (
+                <span className="ml-1 w-2 h-2 bg-red-600 rounded-full shadow-[0_0_8px_rgba(220,38,38,0.5)]"></span>
+              )}
+            </button>
+          );
+        })}
       </div>
-
-      <div className="bg-white p-1 rounded-xl border border-slate-200 shadow-sm flex items-center gap-1 overflow-x-auto no-scrollbar scroll-smooth">
-        <button
-          onClick={() => setActiveTab('inventory')}
-          className={cn(
-            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
-            activeTab === 'inventory' 
-              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
-              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-          )}
-        >
-          Inventory
-        </button>
-        <button
-          onClick={() => setActiveTab('requests')}
-          className={cn(
-            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
-            activeTab === 'requests' 
-              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
-              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-          )}
-        >
-          Requests
-        </button>
-        <button
-          onClick={() => setActiveTab('dispatch')}
-          className={cn(
-            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
-            activeTab === 'dispatch' 
-              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
-              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-          )}
-        >
-          Dispatches
-        </button>
-        <button
-          onClick={() => setActiveTab('return')}
-          className={cn(
-            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
-            activeTab === 'return' 
-              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
-              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-          )}
-        >
-          Returns
-        </button>
-        <button
-          onClick={() => setActiveTab('destruction')}
-          className={cn(
-            "flex-1 px-6 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all rounded-lg whitespace-nowrap",
-            activeTab === 'destruction' 
-              ? "bg-red-600 text-white shadow-md shadow-red-600/20" 
-              : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-          )}
-        >
-          Destruction
-        </button>
-      </div>
+ </div>
 
       {activeTab === 'inventory' ? (
         <div className="space-y-6">
@@ -2079,4 +2063,4 @@ export function Equipment({ language, projects, company, assets, setAssets }: Eq
       )}
     </div>
   );
-}
+});

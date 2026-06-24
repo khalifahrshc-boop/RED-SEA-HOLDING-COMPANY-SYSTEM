@@ -221,6 +221,31 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["reportNumber", "reportTitle", "reportDate", "reportStatus"]
+    },
+    "ProjectTask": {
+      "title": "Project Task",
+      "description": "A task or milestone within a project plan",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "date": { "type": "string" },
+        "endDate": { "type": "string" },
+        "task": { "type": "string" },
+        "goal": { "type": "string" },
+        "taskType": { "type": "string" },
+        "expectedMeters": { "type": "number" },
+        "maxWorkers": { "type": "number" },
+        "maxManagers": { "type": "number" },
+        "allowedRole": { "type": "string" },
+        "location": { "type": "string" },
+        "startDay": { "type": "number" },
+        "endDay": { "type": "number" },
+        "assignedTo": { "type": "object" },
+        "department": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["projectId", "task", "status"]
     }
   },
   "firestore": {
@@ -308,6 +333,7 @@
       "description": "Wizard-generated legal contracts"
     },
     "/planning_tasks/{id}": {
+      "schema": "ProjectTask",
       "description": "Project task dependencies and milestones"
     },
     "/project_charters/{id}": {
