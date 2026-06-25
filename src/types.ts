@@ -222,6 +222,7 @@ export interface PriceQuote {
   taxAmount?: number;
   totalAmount: number;
   termsAndConditions?: string[];
+  scopeOfWork?: string[];
   clientRepresentativeName?: string;
   authorizedSignatureName?: string;
   status: 'Draft' | 'Internal Review' | 'Awaiting Finance' | 'Approved' | 'Rejected';

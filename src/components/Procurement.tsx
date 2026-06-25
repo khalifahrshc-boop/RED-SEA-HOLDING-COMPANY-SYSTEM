@@ -119,6 +119,7 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
     'Installation and commissioning are included unless stated otherwise.',
     'Warranty: 1 year manufacturer warranty on all items.'
   ]);
+  const [scopes, setScopes] = React.useState<string[]>([]);
   const [quoteTaxRate, setQuoteTaxRate] = React.useState<number>(15);
 
   const addQuoteItem = () => {
@@ -157,6 +158,14 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
     const newTerms = [...terms];
     newTerms[idx] = val;
     setTerms(newTerms);
+  };
+
+  const addScope = () => setScopes([...scopes, 'New scope item...']);
+  const removeScope = (idx: number) => setScopes(scopes.filter((_, i) => i !== idx));
+  const updateScope = (idx: number, val: string) => {
+    const newScopes = [...scopes];
+    newScopes[idx] = val;
+    setScopes(newScopes);
   };
 
   const handleApproval = (id: string, type: 'quote' | 'po', nextStatus: any) => {
@@ -411,8 +420,26 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
       doc.text("TOTAL", summaryX, currentY + 1.5);
       doc.text(`SAR ${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, valueX, currentY + 1.5, { align: 'right' });
 
+      // Scope of Work Section
+      if (item.scopeOfWork && item.scopeOfWork.length > 0) {
+        currentY += 20;
+        if (currentY > 260) { doc.addPage(); currentY = 20; }
+        doc.setFontSize(8);
+        doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+        doc.text("SCOPE OF WORK:", 14, currentY);
+        doc.setFontSize(7);
+        doc.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+        doc.setFont("helvetica", "normal");
+        
+        item.scopeOfWork.forEach((scope: string, idx: number) => {
+          doc.text(`- ${scope}`, 14, currentY + 6 + (idx * 4.5));
+        });
+        currentY += (item.scopeOfWork.length * 4.5) + 5;
+      }
+
       // Terms Section
-      currentY += 20;
+      currentY += 15;
+      if (currentY > 260) { doc.addPage(); currentY = 20; }
       doc.setFontSize(8);
       doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
       doc.text("TERMS AND CONDITIONS:", 14, currentY);
@@ -519,6 +546,7 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
       status: formData.get('status') as any,
       items: quoteItems,
       termsAndConditions: terms,
+      scopeOfWork: scopes,
       clientRepresentativeName: formData.get('clientRepresentativeName') as string,
       authorizedSignatureName: formData.get('authorizedSignatureName') as string,
       quoteId: quoteId || undefined,
@@ -549,6 +577,7 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
       'Installation and commissioning are included unless stated otherwise.',
       'Warranty: 1 year manufacturer warranty on all items.'
     ]);
+    setScopes([]);
   };
 
   const openForm = (item: any = null) => {
@@ -557,6 +586,7 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
       setCurrentItem(item);
       setQuoteItems(item.items || []);
       if (item.termsAndConditions) setTerms(item.termsAndConditions);
+      if (item.scopeOfWork) setScopes(item.scopeOfWork);
       if (item.taxRate !== undefined) setQuoteTaxRate(item.taxRate);
     } else {
       setIsEditMode(false);
@@ -570,6 +600,7 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
         'Installation and commissioning are included unless stated otherwise.',
         'Warranty: 1 year manufacturer warranty on all items.'
       ]);
+      setScopes([]);
       setQuoteTaxRate(15);
     }
     setIsModalOpen(true);
@@ -921,15 +952,40 @@ export function Procurement({ projects, language, onUpdateProject, company }: Pr
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                    <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2 modern-scrollbar">
                       {terms.map((term, idx) => (
                         <div key={idx} className="flex gap-2">
-                          <input 
+                          <textarea 
                             value={term}
                             onChange={(e) => updateTerm(idx, e.target.value)}
-                            className="flex-1 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-[10px] outline-none"
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-[10px] outline-none resize-y min-h-[40px]"
+                            rows={2}
                           />
-                          <button type="button" onClick={() => removeTerm(idx)} className="text-slate-300 hover:text-red-500">
+                          <button type="button" onClick={() => removeTerm(idx)} className="text-slate-300 hover:text-red-500 shrink-0 mt-1">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scope of Work</label>
+                      <button type="button" onClick={addScope} className="text-red-600 hover:text-red-700">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2 modern-scrollbar">
+                      {scopes.map((scope, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <textarea 
+                            value={scope}
+                            onChange={(e) => updateScope(idx, e.target.value)}
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-[10px] outline-none resize-y min-h-[40px]"
+                            rows={2}
+                          />
+                          <button type="button" onClick={() => removeScope(idx)} className="text-slate-300 hover:text-red-500 shrink-0 mt-1">
                             <X className="w-3 h-3" />
                           </button>
                         </div>
